@@ -44,19 +44,19 @@ export type FarmState = {
   rpt: FarmingRewards;
 
   /** Time in seconds until current cycle ends. This is the time at which the rewards are depleted. Next cycle is automatically picked up if next_rewards are deposited.*/
-  duration: number;
+  duration: bigint;
 
   /** The duration of the next cycle.*/
-  nextDuration: number;
+  nextDuration: bigint;
 
   /** Amounts of rewards deposited for the next cycle.*/
   nextRewards: FarmingRewards;
 
   /** The number of active stakers. Active staker stakes at least 1 token.*/
-  numStakers: number;
+  numStakers: bigint;
 
   /** The sum of all stakers deposits.*/
-  totalStaked: number;
+  totalStaked: bigint;
 
   /** The time the farm was last updated.*/
   updatedAt: Date;
@@ -113,14 +113,10 @@ export function internalStateToState(
   algod: algosdk.Algodv2,
   internalState: FarmInternalState,
 ): FarmState {
-  const stakedAsset = getCachedAsset(
-    algod,
-    Number(internalState.stakedAssetId),
-    0,
-  );
+  const stakedAsset = getCachedAsset(algod, internalState.stakedAssetId, 0);
 
   const rewardAssets = internalState.rewardAssetIds.map((assetId) =>
-    getCachedAsset(algod, Number(assetId), 0),
+    getCachedAsset(algod, assetId, 0),
   );
 
   const rpt = formatRpt(internalState.rpt, internalState.rptFrac);
@@ -158,8 +154,8 @@ export function formatRewards(
   return rewards;
 }
 
-export function formatRpt(rptWhole: bigint[], rptFrac: bigint[]): number[] {
+export function formatRpt(rptWhole: bigint[], rptFrac: bigint[]): bigint[] {
   return rptWhole.map(
-    (whole, index) => Number(whole) + Number(rptFrac[index]) / 2 ** 64,
+    (whole, index) => whole + BigInt(rptFrac[index]) / BigInt(2 ** 64),
   );
 }

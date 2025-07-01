@@ -4,11 +4,11 @@ import { encode } from "./encoding";
 
 export function getCachedAsset(
   algod: algosdk.Algodv2,
-  index: number,
+  index: bigint,
   decimals: number,
 ): Asset {
-  if (Asset.assetsCache[index]) {
-    return Asset.assetsCache[index];
+  if (Asset.assetsCache[Number(index)]) {
+    return Asset.assetsCache[Number(index)];
   }
 
   const asset = new Asset(algod, index);
@@ -17,12 +17,12 @@ export function getCachedAsset(
 }
 
 export function getAlgo(algod: algosdk.Algodv2) {
-  const asset = new Asset(algod, 0);
+  const asset = new Asset(algod, 0n);
   asset.name = "Algo";
   asset.unitName = "ALGO";
   asset.decimals = 6;
   asset.ratio = 10 ** asset.decimals;
-  Asset.assetsCache[asset.index] = asset;
+  Asset.assetsCache[Number(asset.index)] = asset;
   return asset;
 }
 
@@ -39,13 +39,13 @@ export function getAlgo(algod: algosdk.Algodv2) {
  */
 export async function fetchAssetByIndex(
   algod: algosdk.Algodv2,
-  index: number,
+  index: bigint,
 ): Promise<Asset> {
-  if (Asset.assetsCache[index]) {
-    return Asset.assetsCache[index];
+  if (Asset.assetsCache[Number(index)]) {
+    return Asset.assetsCache[Number(index)];
   }
 
-  if (index === 0) {
+  if (index === 0n) {
     return getAlgo(algod);
   }
 
@@ -58,7 +58,7 @@ export async function fetchAssetByIndex(
   asset.decimals = params.decimals;
   asset.ratio = 10 ** asset.decimals;
 
-  Asset.assetsCache[index] = asset;
+  Asset.assetsCache[Number(index)] = asset;
   return asset;
 }
 
@@ -83,7 +83,7 @@ export class Asset {
   /**
    * The ID of the asset.
    */
-  public index: number;
+  public index: bigint;
 
   /**
    * The name of the Asset if there is one. This may be empty.
@@ -114,7 +114,7 @@ export class Asset {
    * @param algod the Algorand sdk client to use for extracting asset details.
    * @param index the ID of the asset.
    */
-  constructor(algod: algosdk.Algodv2, index: number) {
+  constructor(algod: algosdk.Algodv2, index: bigint) {
     this.algod = algod;
     this.index = index;
   }
@@ -204,7 +204,7 @@ export class Asset {
    * @returns The amount of asset or null if the account is not opted into the asset.
    */
   getHoldingFromAccountInformation(accountInformation: any): number | null {
-    if (this.index === 0) {
+    if (this.index === 0n) {
       return accountInformation.amount;
     }
 
@@ -223,7 +223,7 @@ export class Asset {
     suggestedParams: algosdk.SuggestedParams,
     note = "",
   ): algosdk.Transaction {
-    if (this.index === 0) {
+    if (this.index === 0n) {
       // ALGO
       return algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         sender,

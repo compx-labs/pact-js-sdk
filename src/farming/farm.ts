@@ -41,7 +41,7 @@ const DEPOSIT_REWARDS_SIG = new Uint8Array([111, 232, 27, 155]);
 
 export async function fetchFarmRawStateById(
   algod: algosdk.Algodv2,
-  appId: number,
+  appId: bigint,
 ) {
   const appInfo = await algod.getApplicationByID(appId).do();
   return parseState(appInfo.params.globalState || []);
@@ -49,7 +49,7 @@ export async function fetchFarmRawStateById(
 
 export function makeFarmFromRawState(
   algod: algosdk.Algodv2,
-  appId: number,
+  appId: bigint,
   rawState: any,
 ): Farm {
   const internalState = parseInternalState(rawState);
@@ -58,7 +58,7 @@ export function makeFarmFromRawState(
   return new Farm(algod, appId, rawState, internalState, state);
 }
 
-export async function fetchFarmById(algod: algosdk.Algodv2, appId: number) {
+export async function fetchFarmById(algod: algosdk.Algodv2, appId: bigint) {
   const rawState = await fetchFarmRawStateById(algod, appId);
   return makeFarmFromRawState(algod, appId, rawState);
 }
@@ -69,7 +69,7 @@ export class Farm {
 
   constructor(
     public algod: algosdk.Algodv2,
-    public appId: number,
+    public appId: bigint,
     public rawState: any,
     public internalState: FarmInternalState,
     public state: FarmState,
@@ -113,12 +113,12 @@ export class Farm {
   haveRewards(dt?: Date): boolean {
     const state = this.state;
 
-    if (state.duration === 0) {
+    if (state.duration === 0n) {
       // Finished distributing rewards or there never were any rewards.
       return false;
     }
 
-    if (state.totalStaked === 0) {
+    if (state.totalStaked === 0n) {
       // The farm is paused and still has rewards.
       return true;
     }
@@ -127,8 +127,8 @@ export class Farm {
       dt = new Date();
     }
 
-    const durationMs = (state.duration + state.nextDuration) * 1000;
-    if (dt < new Date(state.updatedAt.getTime() + durationMs)) {
+    const durationMs = (state.duration + state.nextDuration) * 1000n;
+    if (dt < new Date(Number(BigInt(state.updatedAt.getTime()) + durationMs))) {
       // The farm is going and still has rewards.
       return true;
     }
@@ -211,7 +211,7 @@ export class Farm {
     const pastAccruedRewards = this.calculatePastAccruedRewards(
       userState.staked,
       userState.rpt,
-    );
+    ) as unknown as FarmingRewards;
 
     const estimatedRewards = this.simulateAccruedRewards(
       atTime,
@@ -224,7 +224,7 @@ export class Farm {
     return this.sumRewards(rewards, pastAccruedRewards);
   }
 
-  simulateNewStaker(atTime: Date, stakedAmount: number): FarmingRewards {
+  simulateNewStaker(atTime: Date, stakedAmount: bigint): FarmingRewards {
     return this.simulateAccruedRewards(
       atTime,
       stakedAmount,
@@ -235,15 +235,19 @@ export class Farm {
 
   simulateAccruedRewards(
     atTime: Date,
-    stakedAmount: number,
-    totalStaked: number,
+    stakedAmount: bigint,
+    totalStaked: bigint,
     options: { extrapolateFutureRewards?: boolean } = {},
   ): FarmingRewards {
-    let duration =
-      Math.floor(atTime.getTime() - this.state.updatedAt.getTime()) / 1000;
+    let duration = BigInt(
+      Math.floor(atTime.getTime() - this.state.updatedAt.getTime()) / 1000,
+    );
 
-    if (totalStaked === 0) {
-      return mapToObject(this.state.rewardAssets, (asset) => [asset.index, 0]);
+    if (totalStaked === 0n) {
+      return mapToObject(this.state.rewardAssets, (asset) => [
+        Number(asset.index),
+        0n,
+      ]);
     }
 
     const stakeRatio = stakedAmount / totalStaked;
@@ -282,7 +286,7 @@ export class Farm {
     }
 
     const nextDuration = this.state.nextDuration || this.state.duration;
-    if (nextDuration === 0) {
+    if (nextDuration === 0n) {
       return rewards;
     }
 
@@ -295,7 +299,11 @@ export class Farm {
       (assetAndAmount) => {
         return [
           assetAndAmount[0],
-          Math.floor(assetAndAmount[1] * (duration / nextDuration)),
+          BigInt(
+            Math.floor(
+              Number(assetAndAmount[1]) * Number(duration / nextDuration),
+            ),
+          ),
         ];
       },
     );
@@ -311,35 +319,44 @@ export class Farm {
   }
 
   private simulateCycleRewards(
-    stakeRatio: number,
+    stakeRatio: bigint,
     rewards: FarmingRewards,
-    stakeDuration: number,
-    cycleDuration: number,
+    stakeDuration: bigint,
+    cycleDuration: bigint,
   ): FarmingRewards {
-    if (cycleDuration === 0) {
-      return mapToObject(this.state.rewardAssets, (asset) => [asset.index, 0]);
+    if (cycleDuration === 0n) {
+      const fr: FarmingRewards = mapToObject(
+        this.state.rewardAssets,
+        (asset) => [Number(asset.index), 0n],
+      );
+      return fr;
     }
 
-    stakeDuration = Math.min(stakeDuration, cycleDuration);
+    stakeDuration = BigInt(
+      Math.min(Number(stakeDuration), Number(cycleDuration)),
+    );
 
     return mapToObject(this.state.rewardAssets, (asset) => [
-      asset.index,
-      Math.floor(
-        stakeRatio *
-          (rewards[asset.index] ?? 0) *
-          (stakeDuration / cycleDuration),
+      Number(asset.index),
+      BigInt(
+        Math.floor(
+          Number(stakeRatio) *
+            Number(rewards[Number(asset.index)] ?? 0n) *
+            (Number(stakeDuration) / Number(cycleDuration)),
+        ),
       ),
     ]);
   }
 
-  calculatePastAccruedRewards(stakedAmount: number, userRpt: FarmingRewards) {
+  calculatePastAccruedRewards(stakedAmount: bigint, userRpt: FarmingRewards) {
     return mapToObject(this.state.rewardAssets, (asset) => [
-      asset.index,
+      Number(asset.index),
       Math.floor(
         Math.max(
           0,
-          (this.state.rpt[asset.index] ?? 0) - (userRpt[asset.index] ?? 0),
-        ) * stakedAmount,
+          Number(this.state.rpt[Number(asset.index)] ?? 0n) -
+            Number(userRpt[Number(asset.index)] ?? 0n),
+        ) * Number(stakedAmount),
       ),
     ]);
   }
@@ -469,11 +486,11 @@ export class Farm {
     duration: number,
   ): algosdk.Transaction[] {
     const rewardAssets = Object.keys(rewards).map((asset) =>
-      getCachedAsset(this.algod, Number(asset), 0),
+      getCachedAsset(this.algod, BigInt(asset), 0),
     );
 
     const assetIndexToAsset = mapToObject(rewardAssets, (asset) => [
-      asset.index,
+      Number(asset.index),
       asset,
     ]);
 
@@ -532,7 +549,7 @@ export class Farm {
       assetIndexToAsset[Number(assetIndex)].buildTransferTx(
         this.state.admin,
         this.appAddress,
-        rewards[Number(assetIndex)],
+        Number(rewards[Number(assetIndex)]),
         this.suggestedParams,
       ),
     );

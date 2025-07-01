@@ -46,8 +46,8 @@ export async function fetchEscrowApprovalProgram(
 
 export function buildDeployEscrowTxs(
   sender: string,
-  farmAppId: number,
-  stakedAssetId: number,
+  farmAppId: bigint,
+  stakedAssetId: bigint,
   suggestedParams: algosdk.SuggestedParams,
 ): algosdk.Transaction[] {
   const approvalProgram = new Uint8Array(

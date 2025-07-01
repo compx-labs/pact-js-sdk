@@ -39,7 +39,7 @@ export function parseState(kv: any) {
   return res;
 }
 
-export function mapToObject<T, V, K extends string | number>(
+export function mapToObject<T, V, K extends string | number | symbol>(
   items: T[],
   callback: (item: T) => [K, V],
 ): Record<K, V> {
@@ -61,7 +61,7 @@ export function getBoxMinBalance(lenBoxName: number, boxSize: number): number {
   return 2500 + 400 * (lenBoxName + boxSize);
 }
 
-export async function getLastRound(algod: algosdk.Algodv2): Promise<number> {
+export async function getLastRound(algod: algosdk.Algodv2): Promise<bigint> {
   const status = await algod.status().do();
-  return status["last-round"];
+  return status.lastRound;
 }
