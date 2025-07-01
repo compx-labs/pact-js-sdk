@@ -54,7 +54,7 @@ export async function fetchAssetByIndex(
 
   const asset = new Asset(algod, index);
   asset.name = params.name;
-  asset.unitName = params["unit-name"];
+  asset.unitName = params.unitName;
   asset.decimals = params.decimals;
   asset.ratio = 10 ** asset.decimals;
 
@@ -143,8 +143,8 @@ export class Asset {
    */
   buildOptInTx(address: string, suggestedParams: algosdk.SuggestedParams) {
     return algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: address,
-      to: address,
+      sender: address,
+      receiver: address,
       amount: 0,
       assetIndex: this.index,
       suggestedParams,
@@ -162,8 +162,8 @@ export class Asset {
     suggestedParams: algosdk.SuggestedParams,
   ) {
     return algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: address,
-      to: address,
+      sender: address,
+      receiver: address,
       closeRemainderTo: closeTo,
       amount: 0,
       assetIndex: this.index,
@@ -226,8 +226,8 @@ export class Asset {
     if (this.index === 0) {
       // ALGO
       return algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-        from: sender,
-        to: receiver,
+        sender,
+        receiver,
         amount,
         note: encode(note),
         suggestedParams,
@@ -235,8 +235,8 @@ export class Asset {
     }
 
     return algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: sender,
-      to: receiver,
+      sender,
+      receiver,
       amount,
       note: encode(note),
       suggestedParams,

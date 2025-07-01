@@ -3,21 +3,21 @@ import algosdk from "algosdk";
 import { Asset, getCachedAsset } from "../asset";
 import { decodeAddressFromGlobalState, decodeUint64Array } from "../encoding";
 
-export type FarmingRewards = Record<number, number>;
+export type FarmingRewards = Record<number, bigint>;
 
 export type FarmInternalState = {
-  stakedAssetId: number;
-  rewardAssetIds: number[];
-  distributedRewards: number[];
-  claimedRewards: number[];
-  pendingRewards: number[];
-  nextRewards: number[];
-  rptFrac: number[];
-  rpt: number[];
-  duration: number;
-  nextDuration: number;
-  numStakers: number;
-  totalStaked: number;
+  stakedAssetId: bigint;
+  rewardAssetIds: bigint[];
+  distributedRewards: bigint[];
+  claimedRewards: bigint[];
+  pendingRewards: bigint[];
+  nextRewards: bigint[];
+  rptFrac: bigint[];
+  rpt: bigint[];
+  duration: bigint;
+  nextDuration: bigint;
+  numStakers: bigint;
+  totalStaked: bigint;
   updatedAt: number;
   admin: string;
   updater: string;
@@ -73,10 +73,10 @@ export type FarmState = {
 
 export type FarmUserState = {
   /** The app id of the user's escrow contract.*/
-  escrowId: number;
+  escrowId: bigint;
 
   /** The amount of staked asset the user has deposited in the escrow.*/
-  staked: number;
+  staked: bigint;
 
   /** Amounts of rewards the user has accrued and can claim.*/
   accruedRewards: FarmingRewards;
@@ -113,10 +113,14 @@ export function internalStateToState(
   algod: algosdk.Algodv2,
   internalState: FarmInternalState,
 ): FarmState {
-  const stakedAsset = getCachedAsset(algod, internalState.stakedAssetId, 0);
+  const stakedAsset = getCachedAsset(
+    algod,
+    Number(internalState.stakedAssetId),
+    0,
+  );
 
   const rewardAssets = internalState.rewardAssetIds.map((assetId) =>
-    getCachedAsset(algod, assetId, 0),
+    getCachedAsset(algod, Number(assetId), 0),
   );
 
   const rpt = formatRpt(internalState.rpt, internalState.rptFrac);
@@ -145,15 +149,17 @@ export function internalStateToState(
 
 export function formatRewards(
   assets: Asset[],
-  amounts: number[],
+  amounts: bigint[],
 ): FarmingRewards {
   const rewards: FarmingRewards = {};
   for (let i = 0; i < assets.length; i++) {
-    rewards[assets[i].index] = amounts[i];
+    rewards[Number(assets[i].index)] = BigInt(amounts[i]);
   }
   return rewards;
 }
 
-export function formatRpt(rptWhole: number[], rptFrac: number[]): number[] {
-  return rptWhole.map((whole, index) => whole + rptFrac[index] / 2 ** 64);
+export function formatRpt(rptWhole: bigint[], rptFrac: bigint[]): number[] {
+  return rptWhole.map(
+    (whole, index) => Number(whole) + Number(rptFrac[index]) / 2 ** 64,
+  );
 }

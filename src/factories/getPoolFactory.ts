@@ -28,7 +28,7 @@ export async function getPoolFactory(
 
   const appInfo = await algod.getApplicationByID(appId).do();
   const factoryState = parseGlobalFactoryState(
-    appInfo["params"]["global-state"],
+    appInfo.params.globalState || [],
   );
 
   return new factoryClass(algod, appId, factoryState);

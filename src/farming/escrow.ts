@@ -63,7 +63,7 @@ export function buildDeployEscrowTxs(
   const fundTx = gasStation.buildFundTx(sender, 200_000, suggestedParams);
 
   const createAppTx = algosdk.makeApplicationCreateTxnFromObject({
-    from: sender,
+    sender,
     approvalProgram,
     clearProgram,
     onComplete: algosdk.OnApplicationComplete.NoOpOC,
@@ -78,7 +78,7 @@ export function buildDeployEscrowTxs(
   });
 
   const appOptInTx = algosdk.makeApplicationOptInTxnFromObject({
-    from: sender,
+    sender,
     suggestedParams,
     appIndex: farmAppId,
   });
@@ -88,7 +88,7 @@ export function buildDeployEscrowTxs(
 
 export async function fetchEscrowById(
   algod: algosdk.Algodv2,
-  appId: number,
+  appId: bigint,
   options: { farm?: Farm } = {},
 ): Promise<Escrow> {
   const [state, creator] = await fetchEscrowGlobalState(algod, appId);
@@ -108,19 +108,19 @@ export async function fetchEscrowById(
 
 export async function fetchEscrowGlobalState(
   algod: algosdk.Algodv2,
-  appId: number,
+  appId: bigint,
 ): Promise<[EscrowInternalState, string]> {
   const appInfo = await algod.getApplicationByID(appId).do();
   const internalState = parseGlobalEscrowState(
-    appInfo["params"]["global-state"],
+    appInfo.params.globalState || [],
   );
-  const creator = appInfo["params"]["creator"];
-  return [internalState, creator];
+  const creator = appInfo.params.creator;
+  return [internalState, creator.toString()];
 }
 
 export function parseGlobalEscrowState(rawState: any): EscrowInternalState {
   const state = parseState(rawState);
-  return { masterApp: state["MasterAppID"] };
+  return { masterApp: state.MasterAppID || 0 };
 }
 
 export class Escrow {
@@ -129,12 +129,12 @@ export class Escrow {
 
   constructor(
     public algod: algosdk.Algodv2,
-    public appId: number,
+    public appId: bigint,
     public farm: Farm,
     public userAddress: string,
     public state: EscrowInternalState,
   ) {
-    this.address = algosdk.getApplicationAddress(this.appId);
+    this.address = algosdk.getApplicationAddress(this.appId).toString();
   }
 
   setSuggestedParams(suggestedParams: algosdk.SuggestedParams) {
@@ -176,7 +176,7 @@ export class Escrow {
 
   buildUnstakeTxs(amount: number): algosdk.Transaction[] {
     const unstakeTx = algosdk.makeApplicationNoOpTxnFromObject({
-      from: this.userAddress,
+      sender: this.userAddress,
       appIndex: this.appId,
       foreignApps: [this.farm.appId],
       foreignAssets: [this.farm.stakedAsset.index],
@@ -213,7 +213,7 @@ export class Escrow {
       ...encodedMessage,
     ]);
     return algosdk.makeApplicationNoOpTxnFromObject({
-      from: this.userAddress,
+      sender: this.userAddress,
       appIndex: this.appId,
       appArgs: [SEND_MESSAGE_SIG, new algosdk.ABIUintType(8).encode(1), note],
       accounts: [address],
@@ -223,7 +223,7 @@ export class Escrow {
 
   buildWithdrawAlgos(): algosdk.Transaction {
     return algosdk.makeApplicationNoOpTxnFromObject({
-      from: this.userAddress,
+      sender: this.userAddress,
       appIndex: this.appId,
       appArgs: [WITHDRAW_ALGOS_SIG],
       suggestedParams: spFee(this.suggestedParams, 2000),
@@ -232,7 +232,7 @@ export class Escrow {
 
   buildForceExitTx(): algosdk.Transaction {
     return algosdk.makeApplicationClearStateTxnFromObject({
-      from: this.userAddress,
+      sender: this.userAddress,
       appIndex: this.farm.appId,
       suggestedParams: this.suggestedParams,
     });
@@ -240,7 +240,7 @@ export class Escrow {
 
   buildExitTx(): algosdk.Transaction {
     return algosdk.makeApplicationCloseOutTxnFromObject({
-      from: this.userAddress,
+      sender: this.userAddress,
       appIndex: this.farm.appId,
       suggestedParams: this.suggestedParams,
     });
@@ -248,7 +248,7 @@ export class Escrow {
 
   buildDeleteTx(): algosdk.Transaction {
     return algosdk.makeApplicationDeleteTxnFromObject({
-      from: this.userAddress,
+      sender: this.userAddress,
       appIndex: this.appId,
       foreignApps: [this.farm.appId],
       foreignAssets: [this.farm.stakedAsset.index],

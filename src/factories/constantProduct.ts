@@ -31,8 +31,8 @@ export function buildContantProductTxGroup(
   );
 
   const fundTx = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-    from: sender,
-    to: algosdk.getApplicationAddress(factoryId),
+    sender,
+    receiver: algosdk.getApplicationAddress(factoryId),
     amount: deploymentCost,
     suggestedParams,
   });
@@ -47,7 +47,7 @@ export function buildContantProductTxGroup(
   const boxName = paramsWrapper.toBoxName();
 
   const buildTx = algosdk.makeApplicationNoOpTxnFromObject({
-    from: sender,
+    sender,
     appIndex: factoryId,
     appArgs,
     suggestedParams: spFee(suggestedParams, 10000),

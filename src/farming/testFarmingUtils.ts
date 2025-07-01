@@ -76,7 +76,7 @@ export class FarmingTestBed {
     const assetIndex = await createAsset(this.adminAccount, { name });
     const asset = await this.pact.fetchAsset(assetIndex);
     const optinTx = asset.buildOptInTx(
-      this.userAccount.addr,
+      this.userAccount.addr.toString(),
       this.farm.suggestedParams,
     );
     await signAndSend(optinTx, this.userAccount);
@@ -90,7 +90,7 @@ export class FarmingTestBed {
     const account = options.account ?? this.userAccount;
     const rewards =
       options.rewards ??
-      (await this.farm.fetchUserState(account.addr))?.accruedRewards;
+      (await this.farm.fetchUserState(account.addr.toString()))?.accruedRewards;
 
     if (!rewards) {
       throw Error("No user rewards.");
@@ -139,8 +139,8 @@ export async function makeFreshFarmingTestbed() {
   farm.setSuggestedParams(suggestedParams);
 
   const fundAlgoTx = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-    from: adminAccount.addr,
-    to: farm.appAddress,
+    sender: adminAccount.addr,
+    receiver: farm.appAddress,
     amount: 100_000,
     suggestedParams,
   });
@@ -196,7 +196,7 @@ export async function makeNewAccountForFarm(
   for (const asset of [farm.stakedAsset, ...rewardAssets]) {
     if (asset.index !== 0) {
       const optinTx = asset.buildOptInTx(
-        userAccount.addr,
+        userAccount.addr.toString(),
         farm.suggestedParams,
       );
       await signAndSend(optinTx, userAccount);
@@ -205,8 +205,8 @@ export async function makeNewAccountForFarm(
 
   // Transfer staking asset to the user.
   const transferTx = farm.stakedAsset.buildTransferTx(
-    adminAccount.addr,
-    userAccount.addr,
+    adminAccount.addr.toString(),
+    userAccount.addr.toString(),
     1_000_000,
     farm.suggestedParams,
   );
@@ -221,7 +221,7 @@ export async function deployEscrowForAccount(
   suggestedParams: algosdk.SuggestedParams,
 ): Promise<Escrow> {
   const deployTxs = buildDeployEscrowTxs(
-    userAccount.addr,
+    userAccount.addr.toString(),
     farm.appId,
     farm.stakedAsset.index,
     suggestedParams,
@@ -230,7 +230,7 @@ export async function deployEscrowForAccount(
   const txinfo = await algod
     .pendingTransactionInformation(deployTxs[1].txID())
     .do();
-  const appId = txinfo["application-index"];
+  const appId = txinfo.applicationIndex;
 
   return farm.fetchEscrowById(appId);
 }

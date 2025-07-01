@@ -24,13 +24,13 @@ export function encodeArray(arr: Array<any>): Uint8Array[] {
   });
 }
 
-export function decodeUint64Array(data: string): number[] {
+export function decodeUint64Array(data: string): bigint[] {
   const buffer = Buffer.from(data, "base64");
   let offset = 0;
-  const numbers: number[] = [];
+  const numbers: bigint[] = [];
   while (offset < buffer.length) {
     // We don't need bigints. The values will be small enough to fit into Number.
-    numbers.push(Number(buffer.readBigUInt64BE(offset)));
+    numbers.push(buffer.readBigUInt64BE(offset));
     offset += 8;
   }
   return numbers;

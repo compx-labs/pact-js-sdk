@@ -159,10 +159,15 @@ export type SuggestedParamsOption = {
  */
 export async function fetchAppGlobalState(
   algod: algosdk.Algodv2,
-  appId: number,
+  appId: bigint,
 ): Promise<AppInternalState> {
   const appData = await algod.getApplicationByID(appId).do();
-  return parseGlobalPoolState(appData.params["global-state"]);
+  if (!appData.params?.globalState) {
+    throw new PactSdkError(
+      `Application with id ${appId} does not have a global state.`,
+    );
+  }
+  return parseGlobalPoolState(appData?.params?.globalState);
 }
 
 /**
@@ -173,7 +178,7 @@ export async function fetchAppGlobalState(
  *
  * @returns The pool object for the application id passed in.
  */
-export async function fetchPoolById(algod: algosdk.Algodv2, appId: number) {
+export async function fetchPoolById(algod: algosdk.Algodv2, appId: bigint) {
   const appState = await fetchAppGlobalState(algod, appId);
 
   const [primaryAsset, secondaryAsset, liquidityAsset] = await Promise.all([
@@ -206,8 +211,8 @@ export async function fetchPoolById(algod: algosdk.Algodv2, appId: number) {
  */
 export async function fetchPoolsByAssets(
   algod: algosdk.Algodv2,
-  assetA: Asset | number,
-  assetB: Asset | number,
+  assetA: Asset | bigint,
+  assetB: Asset | bigint,
   pactApiUrl: string,
 ): Promise<Pool[]> {
   const assets = [assetA, assetB].map((a) =>
@@ -216,7 +221,9 @@ export async function fetchPoolsByAssets(
 
   // Make sure that the user didn't mess up assets order.
   // Primary asset always has lower index.
-  const [primaryAsset, secondaryAsset] = assets.sort((a, b) => a - b);
+  const [primaryAsset, secondaryAsset] = assets.sort((a, b) =>
+    Number(BigInt(a) - BigInt(b)),
+  );
 
   if (!pactApiUrl) {
     return Promise.reject("Must provide pactApiUrl.");
@@ -224,8 +231,8 @@ export async function fetchPoolsByAssets(
 
   const appIds = await getAppIdsFromAssets(
     pactApiUrl,
-    primaryAsset,
-    secondaryAsset,
+    BigInt(primaryAsset),
+    BigInt(secondaryAsset),
   );
 
   return Promise.all(appIds.map((appId) => fetchPoolById(algod, appId)));
@@ -244,14 +251,14 @@ export async function fetchPoolsByAssets(
  */
 export async function getAppIdsFromAssets(
   pactApiUrl: string,
-  primaryAssetIndex: number,
-  secondaryAssetIndex: number,
-): Promise<number[]> {
+  primaryAssetIndex: bigint,
+  secondaryAssetIndex: bigint,
+): Promise<bigint[]> {
   const data = await listPools(pactApiUrl, {
     primary_asset__on_chain_id: primaryAssetIndex.toString(),
     secondary_asset__on_chain_id: secondaryAssetIndex.toString(),
   });
-  return data.results.map((pool) => parseInt(pool.on_chain_id));
+  return data.results.map((pool) => BigInt(pool.on_chain_id));
 }
 
 export type ConstantProductPoolParams = {
@@ -288,7 +295,7 @@ export class Pool {
   /**
    * The application id for the pool.
    */
-  appId: number;
+  appId: bigint;
 
   /**
    * The asset of the liquidity pool with the lower index.
@@ -350,7 +357,7 @@ export class Pool {
    */
   constructor(
     algod: algosdk.Algodv2,
-    appId: number,
+    appId: bigint,
     primaryAsset: Asset,
     secondaryAsset: Asset,
     liquidityAsset: Asset,
@@ -718,16 +725,16 @@ export class Pool {
     if (!options.asset.index) {
       // ALGO
       return algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-        from: options.address,
-        to: this.getEscrowAddress(),
+        sender: options.address,
+        receiver: this.getEscrowAddress(),
         amount: BigInt(options.amount),
         note: options.note,
         suggestedParams: options.suggestedParams,
       });
     }
     return algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: options.address,
-      to: this.getEscrowAddress(),
+      sender: options.address,
+      receiver: this.getEscrowAddress(),
       amount: BigInt(options.amount),
       assetIndex: options.asset.index,
       note: options.note,
@@ -744,7 +751,7 @@ export class Pool {
     }
 
     return algosdk.makeApplicationNoOpTxnFromObject({
-      from: options.address,
+      sender: options.address,
       appIndex: this.appId,
       foreignAssets,
       appArgs,

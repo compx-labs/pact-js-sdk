@@ -91,14 +91,14 @@ export async function getPoolId(
   algod: algosdk.Algodv2,
   factoryId: number,
   poolParamsWrapper: PoolParamsWrapper,
-): Promise<number> {
+): Promise<bigint> {
   const boxName = poolParamsWrapper.toBoxName();
   try {
     const box = await algod.getApplicationBoxByName(factoryId, boxName).do();
-    return Number(new algosdk.ABIUintType(64).decode(box.value));
+    return new algosdk.ABIUintType(64).decode(box.value);
   } catch (e) {
     if (e instanceof Error && e.message.includes("box not found")) {
-      return 0;
+      return 0n;
     }
     throw e;
   }
@@ -141,10 +141,10 @@ export abstract class PoolFactory {
   async fetchPool(poolParams: PoolParams): Promise<Pool | null> {
     const paramsWrapper = new PoolParamsWrapper(poolParams);
     const poolId = await getPoolId(this.algod, this.appId, paramsWrapper);
-    if (poolId === 0) {
-      return null;
+    if (poolId) {
+      return await fetchPoolById(this.algod, poolId);
     }
-    return await fetchPoolById(this.algod, poolId);
+    return null;
   }
 
   /**
@@ -173,8 +173,13 @@ export abstract class PoolFactory {
     const txid = txGroup.transactions.at(-1)!.txID();
     await algosdk.waitForConfirmation(this.algod, txid, 10);
     const txinfo = await this.algod.pendingTransactionInformation(txid).do();
-    const poolId = txinfo["inner-txns"][0]["application-index"];
-    return await fetchPoolById(this.algod, poolId);
+    if (txinfo && txinfo.innerTxns && txinfo.innerTxns.length > 0) {
+      const poolId = txinfo.innerTxns[0].applicationIndex;
+      if (poolId) {
+        return await fetchPoolById(this.algod, poolId);
+      }
+    }
+    return Promise.reject();
   }
 
   /**

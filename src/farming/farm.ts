@@ -2,7 +2,7 @@
 This module container utilities for interacting with the farm contract.
  */
 
-import algosdk from "algosdk";
+import algosdk, { Account } from "algosdk";
 
 import { Asset, fetchAssetByIndex, getCachedAsset } from "../asset";
 import { decodeUint64Array, encodeArray } from "../encoding";
@@ -44,7 +44,7 @@ export async function fetchFarmRawStateById(
   appId: number,
 ) {
   const appInfo = await algod.getApplicationByID(appId).do();
-  return parseState(appInfo["params"]["global-state"]);
+  return parseState(appInfo.params.globalState || []);
 }
 
 export function makeFarmFromRawState(
@@ -74,7 +74,7 @@ export class Farm {
     public internalState: FarmInternalState,
     public state: FarmState,
   ) {
-    this.appAddress = algosdk.getApplicationAddress(this.appId);
+    this.appAddress = algosdk.getApplicationAddress(this.appId).toString();
   }
 
   setSuggestedParams(suggestedParams: algosdk.SuggestedParams) {
@@ -137,7 +137,7 @@ export class Farm {
     return false;
   }
 
-  fetchEscrowById(appId: number): Promise<Escrow> {
+  fetchEscrowById(appId: bigint): Promise<Escrow> {
     return fetchEscrowById(this.algod, appId, { farm: this });
   }
 
@@ -159,7 +159,7 @@ export class Farm {
 
   async updateState() {
     const appInfo = await this.algod.getApplicationByID(this.appId).do();
-    this.rawState = parseState(appInfo["params"]["global-state"]);
+    this.rawState = parseState(appInfo.params.globalState || []);
     this.internalState = parseInternalState(this.rawState);
     this.state = internalStateToState(this.algod, this.internalState);
   }
@@ -169,31 +169,36 @@ export class Farm {
     return this.getUserStateFromAccountInfo(accountInfo);
   }
 
-  getUserStateFromAccountInfo(accountInfo: any): FarmUserState | null {
-    const appsState: any[] = accountInfo["apps-local-state"];
-    const appInfo = appsState.find((state) => state["id"] === this.appId);
+  getUserStateFromAccountInfo(
+    accountInfo: algosdk.modelsv2.Account,
+  ): FarmUserState | null {
+    const appsState: any[] = accountInfo.appsLocalState || [];
+    if (!appsState || appsState.length === 0) {
+      return null;
+    }
+    const appInfo = appsState.find((state) => state.id === this.appId);
 
     if (!appInfo) {
       return null;
     }
 
-    const rawState = parseState(appInfo["key-value"]);
+    const rawState = parseState(appInfo.keyValue || []);
 
     const rpt = formatRpt(
-      decodeUint64Array(rawState["RPT"]),
-      decodeUint64Array(rawState["RPT_frac"]),
+      decodeUint64Array(rawState.RPT),
+      decodeUint64Array(rawState.RPT_frac),
     );
 
     return {
-      escrowId: rawState["EscrowID"],
-      staked: rawState["Staked"],
+      escrowId: rawState.EscrowID,
+      staked: rawState.Staked,
       accruedRewards: formatRewards(
         this.state.rewardAssets,
-        decodeUint64Array(rawState["AccruedRewards"]),
+        decodeUint64Array(rawState.AccruedRewards),
       ),
       claimedRewards: formatRewards(
         this.state.rewardAssets,
-        decodeUint64Array(rawState["ClaimedRewards"]),
+        decodeUint64Array(rawState.ClaimedRewards),
       ),
       rpt: formatRewards(this.state.rewardAssets, rpt),
     };
@@ -403,7 +408,7 @@ export class Farm {
     ];
 
     return algosdk.makeApplicationNoOpTxnFromObject({
-      from: escrow.userAddress,
+      sender: escrow.userAddress,
       appIndex: this.appId,
       foreignAssets: [this.stakedAsset.index],
       foreignApps: [escrow.appId],
@@ -430,7 +435,7 @@ export class Farm {
     ];
 
     return algosdk.makeApplicationNoOpTxnFromObject({
-      from: escrow.userAddress,
+      sender: escrow.userAddress,
       appIndex: this.appId,
       foreignAssets: assets.map((asset) => asset.index),
       foreignApps: [escrow.appId],
@@ -442,7 +447,7 @@ export class Farm {
 
   buildUpdateGlobalStateTx(sender: string) {
     return algosdk.makeApplicationNoOpTxnFromObject({
-      from: sender,
+      sender: sender,
       appIndex: this.appId,
       appArgs: [UPDATE_GLOBAL_STATE_SIG],
       suggestedParams: this.suggestedParams,
@@ -451,7 +456,7 @@ export class Farm {
 
   adminBuildAddRewardAssetTx(asset: Asset): algosdk.Transaction {
     return algosdk.makeApplicationNoOpTxnFromObject({
-      from: this.state.admin,
+      sender: this.state.admin,
       suggestedParams: spFee(this.suggestedParams, 2000),
       appIndex: this.appId,
       foreignAssets: [asset.index],
@@ -506,8 +511,8 @@ export class Farm {
     //Fund farm with minimal ALGO balance required for assets opt-ins.
     let optInTxs: algosdk.Transaction[] = [
       algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-        from: this.state.admin,
-        to: this.appAddress,
+        sender: this.state.admin,
+        receiver: this.appAddress,
         amount: assetsToOptIn.length * 100_000,
         suggestedParams: this.suggestedParams,
       }),
@@ -544,7 +549,7 @@ export class Farm {
     ];
 
     const depositRewardsTx = algosdk.makeApplicationNoOpTxnFromObject({
-      from: this.state.admin,
+      sender: this.state.admin,
       suggestedParams: this.suggestedParams,
       appIndex: this.appId,
       appArgs: [DEPOSIT_REWARDS_SIG, ...appArgs],
