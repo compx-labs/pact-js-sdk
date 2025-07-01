@@ -31,13 +31,13 @@ import { Zap } from "./zap";
  */
 export type AddLiquidityOptions = {
   /** The amount of primary asset to deposit. */
-  primaryAssetAmount: number;
+  primaryAssetAmount: bigint;
 
   /** The amount of secondary asset to deposit. */
-  secondaryAssetAmount: number;
+  secondaryAssetAmount: bigint;
 
   /** The maximum allowed slippage in percents e.g. `10` is 10%. Adding liquidity will fail if slippage will be higher. */
-  slippagePct: number;
+  slippagePct: bigint;
 };
 
 export type AddLiquidityTxOptions = {
@@ -52,12 +52,12 @@ export type RawAddLiquidityTxOptions = AddLiquidityOptions & {
   address: string;
 
   /** The transaction fee of the app call. */
-  fee: number;
+  fee: bigint;
 
   /**
    * Amount of minimum liquidity tokens received. The transaction will fail if the real value will be lower than this.
    */
-  minimumMintedLiquidityTokens: number;
+  minimumMintedLiquidityTokens: bigint;
 
   suggestedParams: SuggestedParams;
 
@@ -71,10 +71,10 @@ export type ZapOptions = {
   asset: Asset;
 
   /** Amount used for the zap. */
-  amount: number;
+  amount: bigint;
 
   /** The maximum allowed slippage in percents e.g. `10` is 10%. The swap will fail if slippage will be higher. */
-  slippagePct: number;
+  slippagePct: bigint;
 };
 
 /** The options for building zap transactions. */
@@ -89,7 +89,7 @@ export type RemoveLiquidityOptions = {
   address: string;
 
   /** The amount of the LP token to return to the pool. */
-  amount: number;
+  amount: bigint;
 };
 
 /**
@@ -100,10 +100,10 @@ export type SwapOptions = {
   asset: Asset;
 
   /** Amount to swap or to receive. Look at `swapForExact` flag for details. */
-  amount: number;
+  amount: bigint;
 
   /** The maximum allowed slippage in percents e.g. `10` is 10%. The swap will fail if slippage will be higher. */
-  slippagePct: number;
+  slippagePct: bigint;
 
   /**
    * If false or not provided, the `amount` is the amount to swap (deposit in the contract).
@@ -131,7 +131,7 @@ export type OperationType = "SWAP" | "ADDLIQ" | "REMLIQ";
 export type MakeNoopTxOptions = {
   address: string;
   suggestedParams: algosdk.SuggestedParams;
-  fee: number;
+  fee: bigint;
   args: (OperationType | number)[];
   extraAsset?: Asset;
   note?: Uint8Array;
@@ -140,7 +140,7 @@ export type MakeNoopTxOptions = {
 export type MakeDepositTxOptions = {
   address: string;
   asset: Asset;
-  amount: number;
+  amount: bigint;
   note: Uint8Array;
   suggestedParams: algosdk.SuggestedParams;
 };
@@ -262,18 +262,18 @@ export async function getAppIdsFromAssets(
 }
 
 export type ConstantProductPoolParams = {
-  feeBps: number;
-  pactFeeBps: number;
+  feeBps: bigint;
+  pactFeeBps: bigint;
 };
 
 export type StableswapPoolParams = {
-  feeBps: number;
-  pactFeeBps: number;
-  initialA: number;
-  initialATime: number;
-  futureA: number;
-  futureATime: number;
-  precision: number;
+  feeBps: bigint;
+  pactFeeBps: bigint;
+  initialA: bigint;
+  initialATime: bigint;
+  futureA: bigint;
+  futureATime: bigint;
+  precision: bigint;
 };
 
 /**
@@ -337,7 +337,7 @@ export class Pool {
   /**
    * The fee in basis points for swaps trading on the pool.
    */
-  feeBps: number;
+  feeBps: bigint;
 
   /**
    * The version of the contract. May be 0 for some old pools which don't expose the version in the global state.
@@ -378,12 +378,12 @@ export class Pool {
     ) {
       this.params = {
         feeBps: internalState.FEE_BPS,
-        pactFeeBps: internalState.PACT_FEE_BPS ?? 0,
+        pactFeeBps: internalState.PACT_FEE_BPS ?? 0n,
       };
     } else if (this.poolType === "STABLESWAP") {
       this.params = {
         feeBps: internalState.FEE_BPS,
-        pactFeeBps: internalState.PACT_FEE_BPS ?? 0,
+        pactFeeBps: internalState.PACT_FEE_BPS ?? 0n,
         initialA: internalState.INITIAL_A,
         initialATime: internalState.INITIAL_A_TIME,
         futureA: internalState.FUTURE_A,
@@ -534,7 +534,7 @@ export class Pool {
       address: options.address,
       suggestedParams: options.suggestedParams,
       fee: options.fee,
-      args: ["ADDLIQ", options.minimumMintedLiquidityTokens],
+      args: ["ADDLIQ", Number(options.minimumMintedLiquidityTokens)],
       extraAsset: this.liquidityAsset,
       note: options.note,
     });
@@ -577,7 +577,7 @@ export class Pool {
     const txn2 = this.makeApplicationNoopTx({
       address: options.address,
       suggestedParams: options.suggestedParams,
-      fee: 3000,
+      fee: 3000n,
       args: ["REMLIQ", 0, 0], // min expected primary, min expected secondary
     });
 
@@ -657,7 +657,7 @@ export class Pool {
       address,
       suggestedParams,
       fee: swap.effect.txFee,
-      args: ["SWAP", swap.effect.minimumAmountReceived],
+      args: ["SWAP", Number(swap.effect.minimumAmountReceived)],
     });
 
     return [txn1, txn2];

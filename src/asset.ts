@@ -21,7 +21,7 @@ export function getAlgo(algod: algosdk.Algodv2) {
   asset.name = "Algo";
   asset.unitName = "ALGO";
   asset.decimals = 6;
-  asset.ratio = 10 ** asset.decimals;
+  asset.ratio = BigInt(10 ** asset.decimals);
   Asset.assetsCache[Number(asset.index)] = asset;
   return asset;
 }
@@ -56,7 +56,7 @@ export async function fetchAssetByIndex(
   asset.name = params.name;
   asset.unitName = params.unitName;
   asset.decimals = params.decimals;
-  asset.ratio = 10 ** asset.decimals;
+  asset.ratio = BigInt(10 ** asset.decimals);
 
   Asset.assetsCache[Number(index)] = asset;
   return asset;
@@ -104,7 +104,7 @@ export class Asset {
    * This is used to convert between an integer and floating point
    * representation of the asset without loss of precision.
    */
-  public ratio = 1;
+  public ratio = 1n;
 
   /**
    * Creates an Asset class setting the index and Algorand client.

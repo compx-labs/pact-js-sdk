@@ -4,7 +4,7 @@ import { decode } from "./encoding";
 
 export function spFee(
   suggestedParams: algosdk.SuggestedParams,
-  fee: number,
+  fee: bigint,
 ): algosdk.SuggestedParams {
   return {
     ...suggestedParams,

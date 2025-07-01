@@ -13,11 +13,11 @@ import {
 
 export function deployConstantProductContract(
   account: algosdk.Account,
-  primaryAssetIndex: number,
-  secondaryAssetIndex: number,
+  primaryAssetIndex: bigint,
+  secondaryAssetIndex: bigint,
   options: {
-    feeBps?: number;
-    pactFeeBps?: number;
+    feeBps?: bigint;
+    pactFeeBps?: bigint;
   } = {},
 ) {
   return deployExchangeContract(
@@ -31,11 +31,11 @@ export function deployConstantProductContract(
 
 export function deployNftConstantProductContract(
   account: algosdk.Account,
-  primaryAssetIndex: number,
-  secondaryAssetIndex: number,
+  primaryAssetIndex: bigint,
+  secondaryAssetIndex: bigint,
   options: {
-    feeBps?: number;
-    pactFeeBps?: number;
+    feeBps?: bigint;
+    pactFeeBps?: bigint;
   } = {},
 ) {
   return deployExchangeContract(
@@ -49,12 +49,12 @@ export function deployNftConstantProductContract(
 
 export function deployStableswapContract(
   account: algosdk.Account,
-  primaryAssetIndex: number,
-  secondaryAssetIndex: number,
+  primaryAssetIndex: bigint,
+  secondaryAssetIndex: bigint,
   options: {
-    feeBps?: number;
-    pactFeeBps?: number;
-    amplifier?: number;
+    feeBps?: bigint;
+    pactFeeBps?: bigint;
+    amplifier?: bigint;
     version?: number;
   } = {},
 ) {
@@ -70,12 +70,12 @@ export function deployStableswapContract(
 export function deployExchangeContract(
   account: algosdk.Account,
   poolType: PoolType,
-  primaryAssetIndex: number,
-  secondaryAssetIndex: number,
+  primaryAssetIndex: bigint,
+  secondaryAssetIndex: bigint,
   options: {
-    feeBps?: number;
-    pactFeeBps?: number;
-    amplifier?: number;
+    feeBps?: bigint;
+    pactFeeBps?: bigint;
+    amplifier?: bigint;
     version?: number;
   } = {},
 ) {
@@ -84,9 +84,9 @@ export function deployExchangeContract(
     `--contract-type=${poolType.toLowerCase()}`,
     `--primary_asset_id=${primaryAssetIndex}`,
     `--secondary_asset_id=${secondaryAssetIndex}`,
-    `--fee_bps=${options.feeBps ?? 30}`,
-    `--pact_fee_bps=${options.pactFeeBps ?? 0}`,
-    `--amplifier=${(options.amplifier ?? 80) * 1000}`,
+    `--fee_bps=${options.feeBps ?? 30n}`,
+    `--pact_fee_bps=${options.pactFeeBps ?? 0n}`,
+    `--amplifier=${(options.amplifier ?? 80n) * 1000n}`,
     `--admin_and_treasury_address=${account.addr}`,
   ];
 
@@ -104,7 +104,9 @@ export async function addLiquidity(
   secondaryAssetAmount = 10_000,
   slippagePct = 0,
 ) {
-  const optInTx = await pool.liquidityAsset.prepareOptInTx(account.addr);
+  const optInTx = await pool.liquidityAsset.prepareOptInTx(
+    algosdk.encodeAddress(account.addr.publicKey),
+  );
   await signAndSend(optInTx, account);
 
   const liquidityAddition = pool.prepareAddLiquidity({
@@ -112,7 +114,9 @@ export async function addLiquidity(
     secondaryAssetAmount,
     slippagePct,
   });
-  const addLiqTxGroup = await liquidityAddition.prepareTxGroup(account.addr);
+  const addLiqTxGroup = await liquidityAddition.prepareTxGroup(
+    algosdk.encodeAddress(account.addr.publicKey),
+  );
   await signAndSend(addLiqTxGroup, account);
   await pool.updateState();
 }
@@ -128,16 +132,16 @@ export type PoolTestBed = {
 export async function makeFreshPoolTestbed(
   options: {
     poolType?: PoolType;
-    feeBps?: number;
-    pactFeeBps?: number;
-    amplifier?: number;
+    feeBps?: bigint;
+    pactFeeBps?: bigint;
+    amplifier?: bigint;
     version?: number;
   } = {},
 ): Promise<PoolTestBed> {
   const account = await newAccount();
   const pact = new PactClient(algod);
 
-  const algo = await pact.fetchAsset(0);
+  const algo = await pact.fetchAsset(0n);
   const coinIndex = await createAsset(account);
   const coin = await pact.fetchAsset(coinIndex);
 

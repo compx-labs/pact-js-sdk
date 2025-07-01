@@ -155,7 +155,7 @@ export class PoolCalculator {
     const dNetAmount = new D(netAmount.toString());
     return BigInt(
       dNetAmount
-        .div((10_000 - this.pool.feeBps) / 10_000)
+        .div(Number((10_000n - this.pool.feeBps) / 10_000n))
         .sub(dNetAmount)
         .ceil()
         .toNumber(),
@@ -248,9 +248,9 @@ export class PoolCalculator {
    */
   getAssetPriceAfterLiqChange(
     asset: Asset,
-    primaryLiqChange: number,
-    secondaryLiqChange: number,
-  ): number {
+    primaryLiqChange: bigint,
+    secondaryLiqChange: bigint,
+  ): bigint {
     const newPrimaryLiq =
       (this.pool.internalState.A + primaryLiqChange) /
       this.pool.primaryAsset.ratio;
@@ -276,9 +276,9 @@ export class PoolCalculator {
    */
   getPriceImpactPct(
     asset: Asset,
-    primaryLiqChange: number,
-    secondaryLiqChange: number,
-  ): number {
+    primaryLiqChange: bigint,
+    secondaryLiqChange: bigint,
+  ): bigint {
     const newPrice = this.getAssetPriceAfterLiqChange(
       asset,
       primaryLiqChange,
@@ -288,7 +288,7 @@ export class PoolCalculator {
       asset.index === this.pool.primaryAsset.index
         ? this.primaryAssetPrice
         : this.secondaryAssetPrice;
-    return (newPrice * 100) / oldPrice - 100;
+    return (newPrice * 100n) / oldPrice - 100n;
   }
 
   /**
@@ -299,13 +299,13 @@ export class PoolCalculator {
    *
    * @returns The price of deposited asset in relation to received asset.
    */
-  getSwapPrice(assetDeposited: Asset, amountDeposited: bigint): number {
+  getSwapPrice(assetDeposited: Asset, amountDeposited: bigint): bigint {
     const assetReceived = this.pool.getOtherAsset(assetDeposited);
     const amountReceived = this.amountDepositedToGrossAmountReceived(
       assetDeposited,
       amountDeposited,
     );
     const diff_ratio = assetDeposited.ratio / assetReceived.ratio;
-    return (Number(amountReceived) / Number(amountDeposited)) * diff_ratio;
+    return (amountReceived * diff_ratio) / amountDeposited;
   }
 }

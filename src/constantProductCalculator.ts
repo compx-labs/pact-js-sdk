@@ -53,9 +53,9 @@ export function getConstantProductMintedLiquidityTokens(
 export class ConstantProductCalculator implements SwapCalculator {
   constructor(public pool: Pool) {}
 
-  getPrice(decimalLiqA: number, decimalLiqB: number): number {
+  getPrice(decimalLiqA: bigint, decimalLiqB: bigint): bigint {
     if (!decimalLiqA || !decimalLiqB) {
-      return 0;
+      return 0n;
     }
     return decimalLiqB / decimalLiqA;
   }

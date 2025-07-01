@@ -7,7 +7,7 @@ export function deployFactoryContract(
   account: algosdk.Account,
   contractType: PoolType,
   adminAndTreasuryAddress: string,
-): Promise<number> {
+): Promise<bigint> {
   const command = [
     "deploy-factory",
     `--contract-type=${contractType.toLowerCase()}`,

@@ -20,17 +20,17 @@ export type AddLiquidityEffect = {
   /**
    * Amount of new liquidity tokens minted when adding the liquidity. All the minted tokens will be received by the liquidity provider except of first 1000 minted tokens which are permanently locked in the contract.
    */
-  mintedLiquidityTokens: number;
+  mintedLiquidityTokens: bigint;
 
   /**
    * Amount of minimum liquidity tokens received. The transaction will fail if the real value will be lower than this.
    */
-  minimumMintedLiquidityTokens: number;
+  minimumMintedLiquidityTokens: bigint;
 
   /**
    * Current stableswap amplifier. Zero for constant product pools.
    */
-  amplifier: number;
+  amplifier: bigint;
 
   /**
    * Only for stableswaps. Zero for constant product pools.
@@ -41,12 +41,12 @@ export type AddLiquidityEffect = {
    *
    * Also, a fee is subtracted from each liquidity addition. This negatively impacts the bonus.
    */
-  bonusPct: number;
+  bonusPct: bigint;
 
   /**
    * App call transaction fee.
    */
-  txFee: number;
+  txFee: bigint;
 };
 
 /**
@@ -68,17 +68,17 @@ export class LiquidityAddition {
   /**
    * Amount of primary asset the will be added to the pool.
    */
-  primaryAssetAmount: number;
+  primaryAssetAmount: bigint;
 
   /**
    * Amount of secondary asset the will be added to the pool.
    */
-  secondaryAssetAmount: number;
+  secondaryAssetAmount: bigint;
 
   /**
    * The maximum amount of slippage allowed in performing the add liquidity.
    */
-  slippagePct: number;
+  slippagePct: bigint;
 
   /**
    *
@@ -88,9 +88,9 @@ export class LiquidityAddition {
    */
   constructor(
     pool: Pool,
-    primaryAssetAmount: number,
-    secondaryAssetAmount: number,
-    slippagePct: number,
+    primaryAssetAmount: bigint,
+    secondaryAssetAmount: bigint,
+    slippagePct: bigint,
   ) {
     this.pool = pool;
     this.primaryAssetAmount = primaryAssetAmount;
@@ -116,10 +116,10 @@ export class LiquidityAddition {
   }
 
   private validateLiquidityAddition() {
-    if (this.pool.state.totalLiquidity === 0) {
+    if (this.pool.state.totalLiquidity === 0n) {
       // First liquidity addition, the following condition must be met: sqrt(asset1 * asset2) - 1000 > 0
       const mintedLT = Math.sqrt(
-        this.primaryAssetAmount * this.secondaryAssetAmount,
+        Number(this.primaryAssetAmount * this.secondaryAssetAmount),
       );
       if (mintedLT <= MIN_LT_AMOUNT) {
         throw new AddLiquidityValidationError(
@@ -135,10 +135,10 @@ export class LiquidityAddition {
   }
 
   private buildEffect(): AddLiquidityEffect {
-    let amplifier = 0;
-    let bonusPct = 0;
-    let txFee = 3000;
-    let mintedLiquidityTokens = 0;
+    let amplifier = 0n;
+    let bonusPct = 0n;
+    let txFee = 3000n;
+    let mintedLiquidityTokens = 0n;
 
     const swapCalc = this.pool.calculator.swapCalculator;
     const state = this.pool.state;
@@ -155,24 +155,21 @@ export class LiquidityAddition {
         dAmplifier,
         BigInt(params.precision),
       );
-      mintedLiquidityTokens = Number(
-        swapCalc.getMintedLiquidityTokens(
-          BigInt(this.primaryAssetAmount),
-          BigInt(this.secondaryAssetAmount),
-        ),
+      mintedLiquidityTokens = swapCalc.getMintedLiquidityTokens(
+        BigInt(this.primaryAssetAmount),
+        BigInt(this.secondaryAssetAmount),
       );
-      amplifier = Number(dAmplifier) / (this.pool.internalState.PRECISION ?? 1);
-      txFee = getTxFee(swapCalc.mintTokensInvariantIterations, 4); // 1 for each invariant calculation (3) and 1 for sending liquidity tokens.
+
+      amplifier = dAmplifier / (this.pool.internalState.PRECISION ?? 1n);
+      txFee = getTxFee(swapCalc.mintTokensInvariantIterations, 4n); // 1 for each invariant calculation (3) and 1 for sending liquidity tokens.
     } else {
       // Calculating without using calc, cause original pool may have different state, than the one provided (zap case).
-      mintedLiquidityTokens = Number(
-        getConstantProductMintedLiquidityTokens(
-          BigInt(this.primaryAssetAmount),
-          BigInt(this.secondaryAssetAmount),
-          BigInt(state.totalPrimary),
-          BigInt(state.totalSecondary),
-          BigInt(state.totalLiquidity),
-        ),
+      mintedLiquidityTokens = getConstantProductMintedLiquidityTokens(
+        BigInt(this.primaryAssetAmount),
+        BigInt(this.secondaryAssetAmount),
+        BigInt(state.totalPrimary),
+        BigInt(state.totalSecondary),
+        BigInt(state.totalLiquidity),
       );
 
       if (mintedLiquidityTokens <= 0) {
@@ -182,14 +179,21 @@ export class LiquidityAddition {
       }
     }
 
-    let minimumMintedLiquidityTokens = Math.round(
-      mintedLiquidityTokens - (mintedLiquidityTokens * this.slippagePct) / 100,
+    let minimumMintedLiquidityTokens = BigInt(
+      Math.round(
+        Number(
+          mintedLiquidityTokens -
+            (mintedLiquidityTokens * this.slippagePct) / 100n,
+        ),
+      ),
     );
-    minimumMintedLiquidityTokens = Math.max(0, minimumMintedLiquidityTokens);
+    minimumMintedLiquidityTokens = BigInt(
+      Math.max(0, Number(minimumMintedLiquidityTokens)),
+    );
 
     // If this is the first liquidity addition, 1000 tokens will be locked in the contract.
-    if (this.pool.state.totalLiquidity === 0) {
-      minimumMintedLiquidityTokens -= 1000;
+    if (this.pool.state.totalLiquidity === 0n) {
+      minimumMintedLiquidityTokens -= 1000n;
     }
 
     return {

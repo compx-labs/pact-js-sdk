@@ -15,39 +15,39 @@ export type AppInternalState = {
   CONTRACT_NAME?: "PACT AMM" | "[SI] PACT AMM" | "PACT AMM [NFT]";
   VERSION?: number;
 
-  L: number;
-  A: number;
-  B: number;
-  LTID: number;
-  ASSET_A: number;
-  ASSET_B: number;
-  FEE_BPS: number;
+  L: bigint;
+  A: bigint;
+  B: bigint;
+  LTID: bigint;
+  ASSET_A: bigint;
+  ASSET_B: bigint;
+  FEE_BPS: bigint;
 
   // Those may be missing in older contracts.
-  PACT_FEE_BPS?: number;
+  PACT_FEE_BPS?: bigint;
   ADMIN?: string;
   FUTURE_ADMIN?: string;
   TREASURY?: string;
-  PRIMARY_FEES?: number;
-  SECONDARY_FEES?: number;
+  PRIMARY_FEES?: bigint;
+  SECONDARY_FEES?: bigint;
 
   // Stableswaps only below.
-  INITIAL_A?: number;
-  INITIAL_A_TIME?: number;
-  FUTURE_A?: number;
-  FUTURE_A_TIME?: number;
-  PRECISION?: number;
+  INITIAL_A?: bigint;
+  INITIAL_A_TIME?: bigint;
+  FUTURE_A?: bigint;
+  FUTURE_A_TIME?: bigint;
+  PRECISION?: bigint;
 };
 
 /**
  * A user friendly representation of pool's global state.
  */
 export type PoolState = {
-  totalLiquidity: number;
-  totalPrimary: number;
-  totalSecondary: number;
-  primaryAssetPrice: number;
-  secondaryAssetPrice: number;
+  totalLiquidity: bigint;
+  totalPrimary: bigint;
+  totalSecondary: bigint;
+  primaryAssetPrice: bigint;
+  secondaryAssetPrice: bigint;
 };
 
 /**

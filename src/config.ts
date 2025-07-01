@@ -1,23 +1,23 @@
 const MAINNET_API_URL = "https://api.pact.fi";
-const MAINNET_GAS_STATION_ID = 1027956681;
-const MAINNET_FOLKS_LENDING_POOL_ADAPTER_ID = 1123472996;
-const MAINNET_FACTORY_CONSTANT_PRODUCT_ID = 1072843805;
-const MAINNET_FACTORY_NFT_CONSTANT_PRODUCT_ID = 1076423760;
+const MAINNET_GAS_STATION_ID = 1027956681n;
+const MAINNET_FOLKS_LENDING_POOL_ADAPTER_ID = 1123472996n;
+const MAINNET_FACTORY_CONSTANT_PRODUCT_ID = 1072843805n;
+const MAINNET_FACTORY_NFT_CONSTANT_PRODUCT_ID = 1076423760n;
 
 const TESTNET_API_URL = "https://api.testnet.pact.fi";
-const TESTNET_GAS_STATION_ID = 156575978;
-const TESTNET_FOLKS_LENDING_POOL_ADAPTER_ID = 228284187;
-const TESTNET_FACTORY_CONSTANT_PRODUCT_ID = 166540424;
-const TESTNET_FACTORY_NFT_CONSTANT_PRODUCT_ID = 190269485;
+const TESTNET_GAS_STATION_ID = 156575978n;
+const TESTNET_FOLKS_LENDING_POOL_ADAPTER_ID = 228284187n;
+const TESTNET_FACTORY_CONSTANT_PRODUCT_ID = 166540424n;
+const TESTNET_FACTORY_NFT_CONSTANT_PRODUCT_ID = 190269485n;
 
 export type Network = "mainnet" | "testnet" | "dev";
 
 export type Config = {
   apiUrl: string;
-  gasStationId: number;
-  folksLendingPoolAdapterId: number;
-  factoryConstantProductId: number;
-  factoryNftConstantProductId: number;
+  gasStationId: bigint;
+  folksLendingPoolAdapterId: bigint;
+  factoryConstantProductId: bigint;
+  factoryNftConstantProductId: bigint;
 };
 
 export function getConfig(
@@ -45,10 +45,10 @@ export function getConfig(
   } else if (network === "dev") {
     return {
       apiUrl: "",
-      gasStationId: 0,
-      folksLendingPoolAdapterId: 0,
-      factoryConstantProductId: 0,
-      factoryNftConstantProductId: 0,
+      gasStationId: 0n,
+      folksLendingPoolAdapterId: 0n,
+      factoryConstantProductId: 0n,
+      factoryNftConstantProductId: 0n,
       ...overwrite,
     };
   }

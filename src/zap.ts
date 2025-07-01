@@ -109,12 +109,12 @@ export class Zap {
   /**
    * Amount to be used in zap.
    */
-  amount: number;
+  amount: bigint;
 
   /**
    * The maximum amount of slippage allowed in performing the swap.
    */
-  slippagePct: number;
+  slippagePct: bigint;
 
   /**
    * The swap object that will be executed during the zap.
@@ -137,7 +137,7 @@ export class Zap {
    * @param amount Amount to be used in zap.
    * @param slippagePct The maximum amount of slippage allowed in performing the swap.
    */
-  constructor(pool: Pool, asset: Asset, amount: number, slippagePct: number) {
+  constructor(pool: Pool, asset: Asset, amount: bigint, slippagePct: bigint) {
     if (!pool.isAssetInThePool(asset)) {
       throw new PactSdkError("Provided asset was not found in the pool.");
     }
@@ -151,7 +151,7 @@ export class Zap {
 
     this.params = this.getZapParams();
     this.swap = pool.prepareSwap({
-      amount: Number(this.params.swapDeposited),
+      amount: this.params.swapDeposited,
       asset,
       slippagePct,
     });
@@ -214,21 +214,21 @@ export class Zap {
       FEE_PRECISION;
     const updatedState = { ...this.pool.state };
     if (this.isAssetPrimary()) {
-      updatedState.totalPrimary += Number(this.params.swapDeposited);
+      updatedState.totalPrimary += this.params.swapDeposited;
       // There is a small rounding error in many transactions. Substracting 1 solves this problem.
       updatedState.totalSecondary -=
-        Number(this.params.secondaryAddLiq + 1n) + Number(pactFeeAmount);
+        this.params.secondaryAddLiq + 1n + pactFeeAmount;
     } else {
       // There is a small rounding error in many transactions. Substracting 1 solves this problem.
       updatedState.totalPrimary -=
-        Number(this.params.primaryAddLiq + 1n) + Number(pactFeeAmount);
-      updatedState.totalSecondary += Number(this.params.swapDeposited);
+        this.params.primaryAddLiq + 1n + pactFeeAmount;
+      updatedState.totalSecondary += this.params.swapDeposited;
     }
 
     return new LiquidityAddition(
       { ...this.pool, state: updatedState } as Pool,
-      Number(this.params.primaryAddLiq),
-      Number(this.params.secondaryAddLiq),
+      this.params.primaryAddLiq,
+      this.params.secondaryAddLiq,
       this.slippagePct,
     );
   }

@@ -1,3 +1,5 @@
+import algosdk from "algosdk";
+
 import { LendingSwap } from "./folksLendingPool";
 import {
   LendingPoolAdapterTestBed,
@@ -10,23 +12,27 @@ async function assertSwap(
   swap: LendingSwap,
 ) {
   const oldState = testbed.lendingPoolAdapter.pactPool.state;
-  const oldPrimaryHolding = await testbed.algo.getHolding(testbed.account.addr);
+  const oldPrimaryHolding = await testbed.algo.getHolding(
+    algosdk.encodeAddress(testbed.account.addr.publicKey),
+  );
   const oldSecondaryHolding = await testbed.originalAsset.getHolding(
-    testbed.account.addr,
+    algosdk.encodeAddress(testbed.account.addr.publicKey),
   );
 
   const txGroup = await testbed.lendingPoolAdapter.prepareSwapTxGroup({
     swap,
-    address: testbed.account.addr,
+    address: algosdk.encodeAddress(testbed.account.addr.publicKey),
   });
   await signAndSend(txGroup, testbed.account);
 
   await testbed.lendingPoolAdapter.pactPool.updateState();
 
   const newState = testbed.lendingPoolAdapter.pactPool.state;
-  const newPrimaryHolding = await testbed.algo.getHolding(testbed.account.addr);
+  const newPrimaryHolding = await testbed.algo.getHolding(
+    algosdk.encodeAddress(testbed.account.addr.publicKey),
+  );
   const newSecondaryHolding = await testbed.originalAsset.getHolding(
-    testbed.account.addr,
+    algosdk.encodeAddress(testbed.account.addr.publicKey),
   );
 
   if (swap.assetDeposited.index === testbed.algo.index) {
@@ -72,7 +78,7 @@ describe("FolksLendingPool", () => {
         slippagePct: 0,
       });
     let txGroup = await testbed.lendingPoolAdapter.prepareAddLiquidityTxGroup({
-      address: testbed.account.addr,
+      address: algosdk.encodeAddress(testbed.account.addr.publicKey),
       liquidityAddition: lendingLiquidityAddition,
     });
 
@@ -106,13 +112,13 @@ describe("FolksLendingPool", () => {
     // Check LP the user received.
     expect(
       await testbed.lendingPoolAdapter.pactPool.liquidityAsset.getHolding(
-        testbed.account.addr,
+        algosdk.encodeAddress(testbed.account.addr.publicKey),
       ),
     ).toBe(poolLiqudityAddition.effect.mintedLiquidityTokens - 1000); // - blocked LP for first liquidity
 
     // Remove
     txGroup = await testbed.lendingPoolAdapter.prepareRemoveLiquidityTxGroup({
-      address: testbed.account.addr,
+      address: algosdk.encodeAddress(testbed.account.addr.publicKey),
       amount: 20_000,
     });
     await signAndSend(txGroup, testbed.account);

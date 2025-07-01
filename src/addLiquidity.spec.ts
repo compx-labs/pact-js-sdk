@@ -11,7 +11,9 @@ async function testAddLiquidity(
 ) {
   // Perform adding liquidity.
   const oldState = liquidityAddition.pool.state;
-  const swapTxGroup = await liquidityAddition.prepareTxGroup(account.addr);
+  const swapTxGroup = await liquidityAddition.prepareTxGroup(
+    algosdk.encodeAddress(account.addr.publicKey),
+  );
   await signAndSend(swapTxGroup, account);
   await liquidityAddition.pool.updateState();
 
@@ -30,7 +32,7 @@ async function assertStableswapBonus(
   const oldState = pool.state;
 
   const removeLiquidityGroup = await pool.prepareRemoveLiquidityTxGroup({
-    address: account.addr,
+    address: algosdk.encodeAddress(account.addr.publicKey),
     amount: liquidityAddition.effect.mintedLiquidityTokens,
   });
   await signAndSend(removeLiquidityGroup, account);
@@ -60,7 +62,9 @@ function swapTestCase(poolType: PoolType) {
     });
     const [primaryAssetAmount, secondaryAssetAmount] = [10_000, 10_000];
 
-    const optInTx = await pool.liquidityAsset.prepareOptInTx(account.addr);
+    const optInTx = await pool.liquidityAsset.prepareOptInTx(
+      algosdk.encodeAddress(account.addr.publicKey),
+    );
     await signAndSend(optInTx, account);
 
     const liquidityAddition = pool.prepareAddLiquidity({
@@ -78,7 +82,9 @@ function swapTestCase(poolType: PoolType) {
     });
     const [primaryAssetAmount, secondaryAssetAmount] = [30_000, 10_000];
 
-    const optInTx = await pool.liquidityAsset.prepareOptInTx(account.addr);
+    const optInTx = await pool.liquidityAsset.prepareOptInTx(
+      algosdk.encodeAddress(account.addr.publicKey),
+    );
     await signAndSend(optInTx, account);
 
     const liquidityAddition = pool.prepareAddLiquidity({
@@ -140,7 +146,9 @@ describe("nft constant product add/remove liquidity", () => {
     });
 
     // Add liquidity and optin to
-    const optinTx = await pool.liquidityAsset.prepareOptInTx(account.addr);
+    const optinTx = await pool.liquidityAsset.prepareOptInTx(
+      algosdk.encodeAddress(account.addr.publicKey),
+    );
     await signAndSend(optinTx, account);
 
     const [primaryAssetAmount, secondaryAssetAmount] = [100000, 100000];
@@ -154,7 +162,7 @@ describe("nft constant product add/remove liquidity", () => {
     const oldState = pool.state;
     // Remove liquidity
     const removeLiquidityGroup = await pool.prepareRemoveLiquidityTxGroup({
-      address: account.addr,
+      address: algosdk.encodeAddress(account.addr.publicKey),
       amount: liquidityAddition.effect.mintedLiquidityTokens,
     });
     await signAndSend(removeLiquidityGroup, account);

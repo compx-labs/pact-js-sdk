@@ -126,13 +126,15 @@ export class PactClient {
    * @returns List of [[Pool]] for the two assets, the list may be empty.
    */
   fetchPoolsByAssets(
-    primaryAsset: Asset | number,
-    secondaryAsset: Asset | number,
+    primaryAsset: number | bigint | Asset,
+    secondaryAsset: Asset | bigint | number,
   ): Promise<Pool[]> {
+    const normalize = (a: number | bigint | Asset): bigint | Asset =>
+      typeof a === "number" ? BigInt(a) : a;
     return fetchPoolsByAssets(
       this.algod,
-      primaryAsset,
-      secondaryAsset,
+      normalize(primaryAsset),
+      normalize(secondaryAsset),
       this.config.apiUrl,
     );
   }
@@ -144,7 +146,7 @@ export class PactClient {
    *
    * @returns The pool for the application id.
    */
-  fetchPoolById(appId: number): Promise<Pool> {
+  fetchPoolById(appId: bigint): Promise<Pool> {
     return fetchPoolById(this.algod, appId);
   }
 

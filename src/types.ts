@@ -11,7 +11,7 @@ export interface SwapCalculator {
    *
    * @returns The price of one asset in relation to the other.
    */
-  getPrice(decimalLiqA: number, decimalLiqB: number): number;
+  getPrice(decimalLiqA: bigint, decimalLiqB: bigint): bigint;
 
   /**
    * Converts amountDeposited to amountReceived. Ignores fee calculations.

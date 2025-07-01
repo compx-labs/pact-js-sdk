@@ -97,15 +97,17 @@ export class FolksLendingPool {
 
   constructor(
     public algod: algosdk.Algodv2,
-    public appId: number,
-    public managerAppId: number,
-    public depositInterestRate: number,
-    public depositInterestIndex: number,
+    public appId: bigint,
+    public managerAppId: bigint,
+    public depositInterestRate: bigint,
+    public depositInterestIndex: bigint,
     public updatedAt: Date,
     public originalAsset: Asset,
     public fAsset: Asset,
   ) {
-    this.escrowAddress = algosdk.getApplicationAddress(this.appId);
+    this.escrowAddress = algosdk.encodeAddress(
+      algosdk.getApplicationAddress(this.appId).publicKey,
+    );
   }
 
   private calcDepositInterestIndex(timestamp: number): number {
@@ -113,11 +115,13 @@ export class FolksLendingPool {
       timestamp - Math.floor(this.updatedAt.getTime() / 1000),
     );
     return Math.floor(
-      (this.depositInterestIndex *
-        Math.floor(
-          ONE_16_DP + (this.depositInterestRate * dt) / SECONDS_IN_YEAR,
-        )) /
-        ONE_16_DP,
+      Number(
+        (this.depositInterestIndex *
+          (BigInt(ONE_16_DP) +
+            (this.depositInterestRate * BigInt(dt)) /
+              BigInt(SECONDS_IN_YEAR))) /
+          BigInt(ONE_16_DP),
+      ),
     );
   }
 
@@ -155,26 +159,24 @@ export class FolksLendingPool {
  */
 export async function fetchFolksLendingPool(
   algod: algosdk.Algodv2,
-  appId: number,
+  appId: bigint,
 ): Promise<FolksLendingPool> {
   const appInfo = await algod.getApplicationByID(appId).do();
-  const rawState = appInfo["params"]["global-state"];
+  const rawState = appInfo.params.globalState;
   const state = parseState(rawState);
 
-  const managerAppId = Number(
-    Buffer.from(state["pm"], "base64").readBigUInt64BE(0),
-  );
+  const managerAppId = Buffer.from(state["pm"], "base64").readBigUInt64BE(0);
 
   const assetsIds = Buffer.from(state["a"], "base64");
 
-  const originalAssetId = Number(assetsIds.readBigUInt64BE(0));
-  const fAssetId = Number(assetsIds.readBigUInt64BE(8));
+  const originalAssetId = assetsIds.readBigUInt64BE(0);
+  const fAssetId = assetsIds.readBigUInt64BE(8);
 
   const interestInfo = Buffer.from(state["i"], "base64");
 
-  const depositInterestRate = Number(interestInfo.readBigUInt64BE(32));
-  const depositInterestIndex = Number(interestInfo.readBigUInt64BE(40));
-  const updatedAt = Number(interestInfo.readBigUInt64BE(48));
+  const depositInterestRate = interestInfo.readBigUInt64BE(32);
+  const depositInterestIndex = interestInfo.readBigUInt64BE(40);
+  const updatedAt = interestInfo.readBigUInt64BE(48);
 
   const [originalAsset, fAsset] = await Promise.all([
     fetchAssetByIndex(algod, originalAssetId),
@@ -187,7 +189,7 @@ export async function fetchFolksLendingPool(
     managerAppId,
     depositInterestRate,
     depositInterestIndex,
-    new Date(updatedAt * 1000),
+    new Date(Number(updatedAt * 1000n)),
     originalAsset,
     fAsset,
   );
@@ -262,12 +264,14 @@ export class FolksLendingPoolAdapter {
 
   constructor(
     public algod: algosdk.Algodv2,
-    public appId: number,
+    public appId: bigint,
     public pactPool: Pool,
     public primaryLendingPool: FolksLendingPool,
     public secondaryLendingPool: FolksLendingPool,
   ) {
-    this.escrowAddress = algosdk.getApplicationAddress(this.appId);
+    this.escrowAddress = algosdk.encodeAddress(
+      algosdk.getApplicationAddress(this.appId).publicKey,
+    );
     if (
       this.pactPool.primaryAsset.index !==
         this.primaryLendingPool.fAsset.index ||
@@ -291,22 +295,22 @@ export class FolksLendingPoolAdapter {
 
   originalAssetToFAsset(originalAsset: Asset): Asset {
     const assetsMap = {
-      [this.primaryLendingPool.originalAsset.index]:
+      [Number(this.primaryLendingPool.originalAsset.index)]:
         this.primaryLendingPool.fAsset,
-      [this.secondaryLendingPool.originalAsset.index]:
+      [Number(this.secondaryLendingPool.originalAsset.index)]:
         this.secondaryLendingPool.fAsset,
     };
-    return assetsMap[originalAsset.index];
+    return assetsMap[Number(originalAsset.index)];
   }
 
   fAssetToOriginalAsset(fAsset: Asset): Asset {
     const assetsMap = {
-      [this.primaryLendingPool.fAsset.index]:
+      [Number(this.primaryLendingPool.fAsset.index)]:
         this.primaryLendingPool.originalAsset,
-      [this.secondaryLendingPool.fAsset.index]:
+      [Number(this.secondaryLendingPool.fAsset.index)]:
         this.secondaryLendingPool.originalAsset,
     };
-    return assetsMap[fAsset.index];
+    return assetsMap[Number(fAsset.index)];
   }
 
   prepareAddLiquidity(options: AddLiquidityOptions): LendingLiquidityAddition {
@@ -344,7 +348,7 @@ export class FolksLendingPoolAdapter {
     );
 
     const tx3 = algosdk.makeApplicationNoOpTxnFromObject({
-      from: options.address,
+      sender: options.address,
       suggestedParams: spFee(options.suggestedParams, PRE_ADD_LIQ_FEE),
       appIndex: this.appId,
       appArgs: [
@@ -375,7 +379,7 @@ export class FolksLendingPoolAdapter {
     });
 
     const tx4 = algosdk.makeApplicationNoOpTxnFromObject({
-      from: options.address,
+      sender: options.address,
       suggestedParams: spFee(options.suggestedParams, ADD_LIQ_FEE),
       appIndex: this.appId,
       appArgs: [
@@ -419,7 +423,7 @@ export class FolksLendingPoolAdapter {
     );
 
     const tx2 = algosdk.makeApplicationNoOpTxnFromObject({
-      from: options.address,
+      sender: options.address,
       suggestedParams: spFee(options.suggestedParams, REM_LIQ_FEE),
       appIndex: this.appId,
       appArgs: [
@@ -440,7 +444,7 @@ export class FolksLendingPoolAdapter {
     });
 
     const tx3 = algosdk.makeApplicationNoOpTxnFromObject({
-      from: options.address,
+      sender: options.address,
       suggestedParams: spFee(options.suggestedParams, POST_REM_LIQ_FEE),
       appIndex: this.appId,
       appArgs: [
@@ -553,7 +557,7 @@ export class FolksLendingPoolAdapter {
     );
 
     const tx2 = algosdk.makeApplicationNoOpTxnFromObject({
-      from: address,
+      sender: address,
       suggestedParams: spFee(suggestedParams, SWAP_FEE),
       appIndex: this.appId,
       appArgs: [
@@ -608,14 +612,14 @@ export class FolksLendingPoolAdapter {
     assetIds = assetIds.filter((id) => id !== 0);
 
     const tx1 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-      from: address,
-      to: this.escrowAddress,
+      sender: address,
+      receiver: this.escrowAddress,
       amount: assetIds.length * 100_000 + 100_000, // + min balance
       suggestedParams,
     });
 
     const tx2 = algosdk.makeApplicationNoOpTxnFromObject({
-      from: address,
+      sender: address,
       suggestedParams: spFee(suggestedParams, 1000 + 1000 * assetIds.length),
       appIndex: this.appId,
       appArgs: [

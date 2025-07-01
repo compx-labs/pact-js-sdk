@@ -66,14 +66,14 @@ export function getStableswapAmountDeposited(
  * @returns The required fee.
  */
 export function getTxFee(
-  invariantIterations: number,
-  extraMargin: number,
-): number {
-  const innerTxCount = Math.ceil((invariantIterations * 369) / 700);
+  invariantIterations: bigint,
+  extraMargin: bigint,
+): bigint {
+  const innerTxCount = (invariantIterations * 369n) / 700n;
   // +1 - first obligatory inner tx
   // +1 - app call
   // +2 in total
-  return (innerTxCount + 2 + extraMargin) * 1000;
+  return (innerTxCount + 2n + extraMargin) * 1000n;
 }
 
 /**
@@ -136,7 +136,7 @@ export function getAddLiquidityBonusPct(
   precision: bigint,
 ) {
   if (totalPrimary + totalSecondary === 0n) {
-    return 0;
+    return 0n;
   }
 
   const initialTotals: [bigint, bigint] = [totalPrimary, totalSecondary];
@@ -167,7 +167,7 @@ export function getAddLiquidityBonusPct(
 
   // Calculate the gain in absolute terms, considering that each token is worth 1.
   const totalAdded = Number(addedPrimary + addedSecondary);
-  return (Number(finalD - initialD) / totalAdded - 1) * 100;
+  return BigInt((Number(finalD - initialD) / totalAdded - 1) * 100);
 }
 
 export function getAddLiquidityFees(
@@ -279,17 +279,17 @@ export function getNewLiq(
 }
 
 export function getAmplifier(
-  timestampInSeconds: number,
-  initialA: number,
-  initialATime: number,
-  futureA: number,
-  futureATime: number,
+  timestampInSeconds: bigint,
+  initialA: bigint,
+  initialATime: bigint,
+  futureA: bigint,
+  futureATime: bigint,
 ): bigint {
   // Linear interpolation based on current timestamp.
   const dt = futureATime - initialATime;
   const dv = futureA - initialA;
   if (!dt || !dv) {
-    return BigInt(futureA);
+    return futureA;
   }
 
   const dvPerSecond = dv / dt;
@@ -298,9 +298,14 @@ export function getAmplifier(
     futureA > initialA ? [initialA, futureA] : [futureA, initialA];
 
   let currentA = initialA + (timestampInSeconds - initialATime) * dvPerSecond;
-  currentA = Math.max(minA, Math.min(maxA, Math.round(currentA)));
+  currentA = BigInt(
+    Math.max(
+      Number(minA),
+      Math.min(Number(maxA), Math.round(Number(currentA))),
+    ),
+  );
 
-  return BigInt(currentA);
+  return currentA;
 }
 
 /**
@@ -308,10 +313,10 @@ export function getAmplifier(
  */
 export class StableswapCalculator implements SwapCalculator {
   /** Keeps the amount of iteration used to calculate invariant in the last call to getSwapGrossAmountReceived or getSwapAmountDeposited. Needed to calculate transaction fee. */
-  swapInvariantIterations = 0;
+  swapInvariantIterations = 0n;
 
   /** The same as swapInvariantIterations but for adding liquidity. */
-  mintTokensInvariantIterations = 0;
+  mintTokensInvariantIterations = 0n;
 
   constructor(public pool: Pool) {}
 
@@ -322,21 +327,23 @@ export class StableswapCalculator implements SwapCalculator {
   getAmplifier(): bigint {
     const params = this.stableswapParams;
     const now = Date.now() / 1000; // Convert miliseconds to seconds.
-    return getAmplifier(
-      now,
-      params.initialA,
-      params.initialATime,
-      params.futureA,
-      params.futureATime,
+    return BigInt(
+      getAmplifier(
+        BigInt(now),
+        BigInt(params.initialA),
+        BigInt(params.initialATime),
+        BigInt(params.futureA),
+        BigInt(params.futureATime),
+      ),
     );
   }
 
   /**
    * May return NaN for highly unbalanced pools.
    */
-  getPrice(decimalLiqA: number, decimalLiqB: number): number {
+  getPrice(decimalLiqA: bigint, decimalLiqB: bigint): bigint {
     if (!decimalLiqA || !decimalLiqB) {
-      return 0;
+      return 0n;
     }
 
     const ratio = this.pool.primaryAsset.ratio;
@@ -356,12 +363,12 @@ export class StableswapCalculator implements SwapCalculator {
    * Returns NaN if all retries will fail.
    */
   private _getPrice(
-    decimalLiqA: number,
-    decimalLiqB: number,
+    decimalLiqA: bigint,
+    decimalLiqB: bigint,
     retries: number,
-  ): number {
+  ): bigint {
     if (retries <= 0) {
-      return NaN;
+      return 0n;
     }
 
     const ratio = this.pool.primaryAsset.ratio;

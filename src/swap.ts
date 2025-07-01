@@ -16,19 +16,19 @@ export class LiquiditySurpassedError extends SwapValidationError {
  * Swap Effect are the basic details of the effect on the pool of performing the swap.
  */
 export type SwapEffect = {
-  amountReceived: number;
-  amountDeposited: number;
-  minimumAmountReceived: number;
-  primaryAssetPriceAfterSwap: number;
-  secondaryAssetPriceAfterSwap: number;
-  primaryAssetPriceImpactPct: number;
-  secondaryAssetPriceImpactPct: number;
-  fee: number;
-  price: number;
-  txFee: number;
+  amountReceived: bigint;
+  amountDeposited: bigint;
+  minimumAmountReceived: bigint;
+  primaryAssetPriceAfterSwap: bigint;
+  secondaryAssetPriceAfterSwap: bigint;
+  primaryAssetPriceImpactPct: bigint;
+  secondaryAssetPriceImpactPct: bigint;
+  fee: bigint;
+  price: bigint;
+  txFee: bigint;
 
   /** Stableswap only. Zero otherwise. */
-  amplifier: number;
+  amplifier: bigint;
 };
 
 /**
@@ -60,12 +60,12 @@ export class Swap {
   /**
    * Either the amount to swap (deposit) or the amount to receive depending on the `swapForExact` parameter.
    */
-  amount: number;
+  amount: bigint;
 
   /**
    * The maximum amount of slippage allowed in performing the swap.
    */
-  slippagePct: number;
+  slippagePct: bigint;
 
   /**
    * If `true` then `amount` is what you want to receive from the swap. Otherwise, it's an amount that you want to swap (deposit). Note that the contracts do not support the "swap exact for" swap. It works by calculating the amount to deposit on the client side and doing a normal swap on the exchange.
@@ -82,8 +82,8 @@ export class Swap {
   constructor(
     pool: Pool,
     assetDeposited: Asset,
-    amount: number,
-    slippagePct: number,
+    amount: bigint,
+    slippagePct: bigint,
     swapForExact = false,
   ) {
     this.pool = pool;
@@ -133,18 +133,18 @@ export class Swap {
   private buildEffect(): SwapEffect {
     const calc = this.pool.calculator;
 
-    let amountReceived: number;
-    let amountDeposited: number;
+    let amountReceived: bigint;
+    let amountDeposited: bigint;
     if (this.swapForExact) {
       amountReceived = this.amount;
-      amountDeposited = Number(
+      amountDeposited = BigInt(
         calc.netAmountReceivedToAmountDeposited(
           this.assetDeposited,
           BigInt(this.amount),
         ),
       );
     } else {
-      amountReceived = Number(
+      amountReceived = BigInt(
         calc.amountDepositedToNetAmountReceived(
           this.assetDeposited,
           BigInt(this.amount),
@@ -153,7 +153,7 @@ export class Swap {
       amountDeposited = this.amount;
     }
 
-    let primaryLiqChange, secondaryLiqChange: number;
+    let primaryLiqChange, secondaryLiqChange: bigint;
     if (this.assetDeposited.index === this.pool.primaryAsset.index) {
       primaryLiqChange = amountDeposited;
       secondaryLiqChange = -amountReceived;
@@ -173,25 +173,25 @@ export class Swap {
       secondaryLiqChange,
     );
 
-    let amplifier = 0;
-    let txFee = 2000;
+    let amplifier = 0n;
+    let txFee = 2000n;
     const swapCalc = this.pool.calculator.swapCalculator;
 
     if (swapCalc instanceof StableswapCalculator) {
       amplifier =
-        Number(swapCalc.getAmplifier()) /
-        (this.pool.internalState.PRECISION ?? 1);
-      txFee = getTxFee(swapCalc.swapInvariantIterations, 1);
+        BigInt(swapCalc.getAmplifier()) /
+        (this.pool.internalState.PRECISION ?? 1n);
+      txFee = getTxFee(swapCalc.swapInvariantIterations, 1n);
     }
 
     return {
       amountDeposited,
       amountReceived,
-      minimumAmountReceived: Number(
+      minimumAmountReceived: BigInt(
         calc.getMinimumAmountReceived(
           this.assetDeposited,
           BigInt(amountDeposited),
-          BigInt(Math.round(this.slippagePct * 100)),
+          BigInt(Math.round(Number(this.slippagePct * 100n))),
         ),
       ),
       price: calc.getSwapPrice(this.assetDeposited, BigInt(amountDeposited)),
@@ -207,7 +207,7 @@ export class Swap {
         primaryLiqChange,
         secondaryLiqChange,
       ),
-      fee: Number(calc.getFee(this.assetDeposited, BigInt(amountDeposited))),
+      fee: calc.getFee(this.assetDeposited, BigInt(amountDeposited)),
       txFee,
       amplifier,
     };

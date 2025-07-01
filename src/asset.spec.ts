@@ -1,10 +1,12 @@
+import algosdk from "algosdk";
+
 import { PactClient } from "./client";
 import { algod, createAsset, newAccount, signAndSend } from "./testUtils";
 
 describe("Asset", () => {
   it("fetch ALGO", async () => {
     const pact = new PactClient(algod);
-    const asset = await pact.fetchAsset(0);
+    const asset = await pact.fetchAsset(0n);
 
     expect(asset.decimals).toBe(6);
     expect(asset.index).toBe(0);
@@ -48,7 +50,7 @@ describe("Asset", () => {
   it("fetch not existing asset", async () => {
     const pact = new PactClient(algod);
 
-    await expect(pact.fetchAsset(99999999)).rejects.toMatchObject({
+    await expect(pact.fetchAsset(99999999n)).rejects.toMatchObject({
       status: 404,
       response: { body: { message: "asset does not exist" } },
     });
@@ -64,11 +66,17 @@ describe("Asset", () => {
     const asset = await pact.fetchAsset(assetIndex);
 
     const user = await newAccount();
-    expect(await asset.isOptedIn(user.addr)).toBe(false);
+    expect(
+      await asset.isOptedIn(algosdk.encodeAddress(user.addr.publicKey)),
+    ).toBe(false);
 
-    const optInTx = await asset.prepareOptInTx(user.addr);
+    const optInTx = await asset.prepareOptInTx(
+      algosdk.encodeAddress(user.addr.publicKey),
+    );
     await signAndSend(optInTx, user);
 
-    expect(await asset.isOptedIn(user.addr)).toBe(true);
+    expect(
+      await asset.isOptedIn(algosdk.encodeAddress(user.addr.publicKey)),
+    ).toBe(true);
   });
 });

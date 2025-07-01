@@ -1,3 +1,5 @@
+import algosdk from "algosdk";
+
 import { PactClient } from "./client";
 import { PoolBuildParams, PoolParams } from "./factories";
 import { deployFactoryContract } from "./testFactoryUtils";
@@ -9,11 +11,11 @@ describe("factory", () => {
     const factoryId = await deployFactoryContract(
       admin,
       "CONSTANT_PRODUCT",
-      admin.addr,
+      algosdk.encodeAddress(admin.addr.publicKey),
     );
     const pact = new PactClient(algod, { factoryConstantProductId: factoryId });
 
-    const algo = await pact.fetchAsset(0);
+    const algo = await pact.fetchAsset(0n);
     const coin = await pact.fetchAsset(await createAsset(admin));
 
     const factory = await pact.getConstantProductPoolFactory();
@@ -21,11 +23,11 @@ describe("factory", () => {
     // Validate fee bps.
     await expect(
       factory.build(
-        admin.addr,
+        algosdk.encodeAddress(admin.addr.publicKey),
         {
           primaryAssetId: algo.index,
           secondaryAssetId: coin.index,
-          feeBps: 200,
+          feeBps: 200n,
         },
         (txGroup) => Promise.resolve(txGroup.signTxn(admin.sk)),
       ),
@@ -33,11 +35,11 @@ describe("factory", () => {
 
     // Build the pool.
     const pool = await factory.build(
-      admin.addr,
+      algosdk.encodeAddress(admin.addr.publicKey),
       {
         primaryAssetId: algo.index,
         secondaryAssetId: coin.index,
-        feeBps: 100,
+        feeBps: 100n,
       },
       (txGroup) => Promise.resolve(txGroup.signTxn(admin.sk)),
     );
@@ -51,7 +53,9 @@ describe("factory", () => {
 
     // Validate that the pool is functional. Let's add some liquidity.
 
-    const optInTx = await pool.liquidityAsset.prepareOptInTx(admin.addr);
+    const optInTx = await pool.liquidityAsset.prepareOptInTx(
+      algosdk.encodeAddress(admin.addr.publicKey),
+    );
     await algod.sendRawTransaction(optInTx.signTxn(admin.sk)).do();
 
     const liquidityAddition = pool.prepareAddLiquidity({
@@ -60,7 +64,7 @@ describe("factory", () => {
       slippagePct: 0,
     });
     const txGroup = await pool.prepareAddLiquidityTxGroup({
-      address: admin.addr,
+      address: algosdk.encodeAddress(admin.addr.publicKey),
       liquidityAddition,
     });
 
@@ -76,13 +80,13 @@ describe("factory", () => {
     const factoryId = await deployFactoryContract(
       admin,
       "NFT_CONSTANT_PRODUCT",
-      admin.addr,
+      algosdk.encodeAddress(admin.addr.publicKey),
     );
     const pact = new PactClient(algod, {
       factoryNftConstantProductId: factoryId,
     });
 
-    const algo = await pact.fetchAsset(0);
+    const algo = await pact.fetchAsset(0n);
     const coin = await pact.fetchAsset(
       await createAsset(admin, {
         name: "COIN",
@@ -96,11 +100,11 @@ describe("factory", () => {
     // Validate fee bps.
     await expect(
       factory.build(
-        admin.addr,
+        algosdk.encodeAddress(admin.addr.publicKey),
         {
           primaryAssetId: algo.index,
           secondaryAssetId: coin.index,
-          feeBps: 100,
+          feeBps: 100n,
         },
         (txGroup) => Promise.resolve(txGroup.signTxn(admin.sk)),
       ),
@@ -108,11 +112,11 @@ describe("factory", () => {
 
     // Build the pool.
     const pool = await factory.build(
-      admin.addr,
+      algosdk.encodeAddress(admin.addr.publicKey),
       {
         primaryAssetId: algo.index,
         secondaryAssetId: coin.index,
-        feeBps: 350,
+        feeBps: 350n,
       },
       (txGroup) => Promise.resolve(txGroup.signTxn(admin.sk)),
     );
@@ -126,7 +130,9 @@ describe("factory", () => {
 
     // Validate that the pool is functional. Let's add some liquidity.
 
-    const optInTx = await pool.liquidityAsset.prepareOptInTx(admin.addr);
+    const optInTx = await pool.liquidityAsset.prepareOptInTx(
+      algosdk.encodeAddress(admin.addr.publicKey),
+    );
     await algod.sendRawTransaction(optInTx.signTxn(admin.sk)).do();
 
     const liquidityAddition = pool.prepareAddLiquidity({
@@ -135,7 +141,7 @@ describe("factory", () => {
       slippagePct: 0,
     });
     const txGroup = await pool.prepareAddLiquidityTxGroup({
-      address: admin.addr,
+      address: algosdk.encodeAddress(admin.addr.publicKey),
       liquidityAddition,
     });
 
@@ -151,22 +157,24 @@ describe("factory", () => {
     const factoryId = await deployFactoryContract(
       admin,
       "CONSTANT_PRODUCT",
-      admin.addr,
+      algosdk.encodeAddress(admin.addr.publicKey),
     );
     const pact = new PactClient(algod, { factoryConstantProductId: factoryId });
 
     const user = await newAccount();
-    const algo = await pact.fetchAsset(0);
+    const algo = await pact.fetchAsset(0n);
     const coin = await pact.fetchAsset(await createAsset(admin));
 
     const factory = await pact.getConstantProductPoolFactory();
     const poolBuildParams: PoolBuildParams = {
       primaryAssetId: algo.index,
       secondaryAssetId: coin.index,
-      feeBps: 100,
+      feeBps: 100n,
     };
-    const pool = await factory.build(user.addr, poolBuildParams, (txGroup) =>
-      Promise.resolve(txGroup.signTxn(user.sk)),
+    const pool = await factory.build(
+      algosdk.encodeAddress(user.addr.publicKey),
+      poolBuildParams,
+      (txGroup) => Promise.resolve(txGroup.signTxn(user.sk)),
     );
 
     expect(pool.poolType).toBe("CONSTANT_PRODUCT");
@@ -178,11 +186,11 @@ describe("factory", () => {
     const factoryId = await deployFactoryContract(
       admin,
       "CONSTANT_PRODUCT",
-      admin.addr,
+      algosdk.encodeAddress(admin.addr.publicKey),
     );
     const pact = new PactClient(algod, { factoryConstantProductId: factoryId });
 
-    const algo = await pact.fetchAsset(0);
+    const algo = await pact.fetchAsset(0n);
     const coinA = await pact.fetchAsset(await createAsset(admin));
     const coinB = await pact.fetchAsset(await createAsset(admin));
 
@@ -192,52 +200,60 @@ describe("factory", () => {
     let poolBuildParams: PoolBuildParams = {
       primaryAssetId: algo.index,
       secondaryAssetId: coinA.index,
-      feeBps: 2,
+      feeBps: 2n,
     };
-    let pool = await factory.build(admin.addr, poolBuildParams, (txGroup) =>
-      Promise.resolve(txGroup.signTxn(admin.sk)),
+    let pool = await factory.build(
+      algosdk.encodeAddress(admin.addr.publicKey),
+      poolBuildParams,
+      (txGroup) => Promise.resolve(txGroup.signTxn(admin.sk)),
     );
     expect(pool.primaryAsset.index).toBe(algo.index);
     expect(pool.secondaryAsset.index).toBe(coinA.index);
-    expect(pool.feeBps).toBe(2);
-    expect(pool.params.pactFeeBps).toBe(1);
+    expect(pool.feeBps).toBe(2n);
+    expect(pool.params.pactFeeBps).toBe(1n);
 
     // ALGO/COIN_A 0.05%
     poolBuildParams = {
       primaryAssetId: algo.index,
       secondaryAssetId: coinA.index,
-      feeBps: 5,
+      feeBps: 5n,
     };
-    pool = await factory.build(admin.addr, poolBuildParams, (txGroup) =>
-      Promise.resolve(txGroup.signTxn(admin.sk)),
+    pool = await factory.build(
+      algosdk.encodeAddress(admin.addr.publicKey),
+      poolBuildParams,
+      (txGroup) => Promise.resolve(txGroup.signTxn(admin.sk)),
     );
     expect(pool.primaryAsset.index).toBe(algo.index);
     expect(pool.secondaryAsset.index).toBe(coinA.index);
-    expect(pool.feeBps).toBe(5);
-    expect(pool.params.pactFeeBps).toBe(2);
+    expect(pool.feeBps).toBe(5n);
+    expect(pool.params.pactFeeBps).toBe(2n);
 
     // ALGO/COIN_A 0.3%
     poolBuildParams = {
       primaryAssetId: algo.index,
       secondaryAssetId: coinA.index,
-      feeBps: 30,
+      feeBps: 30n,
     };
-    pool = await factory.build(admin.addr, poolBuildParams, (txGroup) =>
-      Promise.resolve(txGroup.signTxn(admin.sk)),
+    pool = await factory.build(
+      algosdk.encodeAddress(admin.addr.publicKey),
+      poolBuildParams,
+      (txGroup) => Promise.resolve(txGroup.signTxn(admin.sk)),
     );
     expect(pool.primaryAsset.index).toBe(algo.index);
     expect(pool.secondaryAsset.index).toBe(coinA.index);
-    expect(pool.feeBps).toBe(30);
-    expect(pool.params.pactFeeBps).toBe(5);
+    expect(pool.feeBps).toBe(30n);
+    expect(pool.params.pactFeeBps).toBe(5n);
 
     // COIN_A/COIN_B 0.05%
     poolBuildParams = {
       primaryAssetId: coinA.index,
       secondaryAssetId: coinB.index,
-      feeBps: 5,
+      feeBps: 5n,
     };
-    pool = await factory.build(admin.addr, poolBuildParams, (txGroup) =>
-      Promise.resolve(txGroup.signTxn(admin.sk)),
+    pool = await factory.build(
+      algosdk.encodeAddress(admin.addr.publicKey),
+      poolBuildParams,
+      (txGroup) => Promise.resolve(txGroup.signTxn(admin.sk)),
     );
     expect(pool.primaryAsset.index).toBe(coinA.index);
     expect(pool.secondaryAsset.index).toBe(coinB.index);
@@ -248,12 +264,14 @@ describe("factory", () => {
     poolBuildParams = {
       primaryAssetId: coinA.index,
       secondaryAssetId: coinB.index,
-      feeBps: 5,
+      feeBps: 5n,
     };
     await expect(
       async () =>
-        await factory.build(admin.addr, poolBuildParams, (txGroup) =>
-          Promise.resolve(txGroup.signTxn(admin.sk)),
+        await factory.build(
+          algosdk.encodeAddress(admin.addr.publicKey),
+          poolBuildParams,
+          (txGroup) => Promise.resolve(txGroup.signTxn(admin.sk)),
         ),
     ).rejects.toThrow("logic eval error");
 
@@ -261,12 +279,14 @@ describe("factory", () => {
     poolBuildParams = {
       primaryAssetId: coinA.index,
       secondaryAssetId: coinB.index,
-      feeBps: 200,
+      feeBps: 200n,
     };
     await expect(
       async () =>
-        await factory.build(admin.addr, poolBuildParams, (txGroup) =>
-          Promise.resolve(txGroup.signTxn(admin.sk)),
+        await factory.build(
+          algosdk.encodeAddress(admin.addr.publicKey),
+          poolBuildParams,
+          (txGroup) => Promise.resolve(txGroup.signTxn(admin.sk)),
         ),
     ).rejects.toThrow("Only one of 100,30,5,2 is allowed for feeBps.");
 
@@ -276,10 +296,10 @@ describe("factory", () => {
     // The order of pools is undefined. Let's sort so that we can make an assertion.
     pools.sort((a, b) => {
       const idDiff = a.primaryAssetId - b.primaryAssetId;
-      if (idDiff === 0) {
-        return a.feeBps - b.feeBps;
+      if (idDiff === 0n) {
+        return Number(a.feeBps - b.feeBps);
       }
-      return idDiff;
+      return Number(idDiff);
     });
     expect(pools).toEqual([
       {
@@ -314,11 +334,11 @@ describe("factory", () => {
     const factoryId = await deployFactoryContract(
       admin,
       "CONSTANT_PRODUCT",
-      admin.addr,
+      algosdk.encodeAddress(admin.addr.publicKey),
     );
     const pact = new PactClient(algod, { factoryConstantProductId: factoryId });
 
-    const algo = await pact.fetchAsset(0);
+    const algo = await pact.fetchAsset(0n);
     const coin = await pact.fetchAsset(await createAsset(admin));
 
     const factory = await pact.getConstantProductPoolFactory();
@@ -326,10 +346,12 @@ describe("factory", () => {
     const poolBuildParams: PoolBuildParams = {
       primaryAssetId: algo.index,
       secondaryAssetId: coin.index,
-      feeBps: 100,
+      feeBps: 100n,
     };
-    const pool = await factory.build(admin.addr, poolBuildParams, (txGroup) =>
-      Promise.resolve(txGroup.signTxn(admin.sk)),
+    const pool = await factory.build(
+      algosdk.encodeAddress(admin.addr.publicKey),
+      poolBuildParams,
+      (txGroup) => Promise.resolve(txGroup.signTxn(admin.sk)),
     );
 
     let poolParams: PoolParams = {
@@ -338,7 +360,7 @@ describe("factory", () => {
     };
     expect((await factory.fetchPool(poolParams))!.appId).toBe(pool.appId);
 
-    poolParams = { ...poolParams, feeBps: 30 };
+    poolParams = { ...poolParams, feeBps: 30n };
     expect(await factory.fetchPool(poolParams)).toBe(null);
   });
 
@@ -347,11 +369,11 @@ describe("factory", () => {
     const factoryId = await deployFactoryContract(
       admin,
       "CONSTANT_PRODUCT",
-      admin.addr,
+      algosdk.encodeAddress(admin.addr.publicKey),
     );
     const pact = new PactClient(algod, { factoryConstantProductId: factoryId });
 
-    const algo = await pact.fetchAsset(0);
+    const algo = await pact.fetchAsset(0n);
     const coin = await pact.fetchAsset(await createAsset(admin));
 
     const factory = await pact.getConstantProductPoolFactory();
@@ -359,12 +381,12 @@ describe("factory", () => {
     const poolBuildParams: PoolBuildParams = {
       primaryAssetId: algo.index,
       secondaryAssetId: coin.index,
-      feeBps: 100,
+      feeBps: 100n,
     };
 
     // Create the pool.
     const [pool, created] = await factory.buildOrGet(
-      admin.addr,
+      algosdk.encodeAddress(admin.addr.publicKey),
       poolBuildParams,
       (txGroup) => Promise.resolve(txGroup.signTxn(admin.sk)),
     );
@@ -373,7 +395,7 @@ describe("factory", () => {
 
     // Try to create a second pool.
     const [anotherPool, anotherCreated] = await factory.buildOrGet(
-      admin.addr,
+      algosdk.encodeAddress(admin.addr.publicKey),
       poolBuildParams,
       (txGroup) => Promise.resolve(txGroup.signTxn(admin.sk)),
     );
