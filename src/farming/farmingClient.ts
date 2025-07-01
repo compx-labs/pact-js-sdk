@@ -8,11 +8,11 @@ export class PactFarmingClient {
 
   constructor(public algod: algosdk.Algodv2) {}
 
-  fetchFarmById(appId: number): Promise<Farm> {
+  fetchFarmById(appId: bigint): Promise<Farm> {
     return fetchFarmById(this.algod, appId);
   }
 
-  fetchEscrowById(appId: number): Promise<Escrow> {
+  fetchEscrowById(appId: bigint): Promise<Escrow> {
     return fetchEscrowById(this.algod, appId);
   }
 }

@@ -40,12 +40,12 @@ const DEFAULT_ASSET_CREATE_OPTIONS: AssetCreateOptions = {
 export async function createAsset(
   account: algosdk.Account,
   options: Partial<AssetCreateOptions> = {},
-): Promise<number> {
+): Promise<bigint> {
   const allOptions = { ...DEFAULT_ASSET_CREATE_OPTIONS, ...options };
   const suggestedParams = await algod.getTransactionParams().do();
 
   const txn = algosdk.makeAssetCreateTxnWithSuggestedParamsFromObject({
-    from: account.addr,
+    sender: account.addr,
     total: BigInt(allOptions.totalIssuance),
     decimals: allOptions.decimals,
     manager: account.addr,
@@ -59,14 +59,14 @@ export async function createAsset(
   });
 
   const tx = await signAndSend(txn, account);
-  const ptx = await algod.pendingTransactionInformation(tx.txId).do();
-  return ptx["asset-index"];
+  const ptx = await algod.pendingTransactionInformation(tx.txid).do();
+  return ptx.assetIndex || 0n;
 }
 
 export function deployContract(
   account: algosdk.Account,
   command: string[],
-): Promise<number> {
+): Promise<bigint> {
   const mnemonic = algosdk.secretKeyToMnemonic(account.sk);
 
   command = [
@@ -98,7 +98,7 @@ export function deployContract(
         return;
       }
 
-      resolve(parseInt(match[1]));
+      resolve(BigInt(parseInt(match[1])));
     });
   });
 }
@@ -115,8 +115,8 @@ export async function fundAccountWithAlgos(
 ) {
   const suggestedParams = await algod.getTransactionParams().do();
   const tx = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-    from: ROOT_ACCOUNT.addr,
-    to: account.addr,
+    sender: ROOT_ACCOUNT.addr,
+    receiver: account.addr,
     amount: amount,
     suggestedParams,
   });
@@ -127,8 +127,8 @@ export async function deployGasStation() {
   const gasStationId = await deployContract(ROOT_ACCOUNT, ["gas-station"]);
   const suggestedParams = await algod.getTransactionParams().do();
   const tx = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-    from: ROOT_ACCOUNT.addr,
-    to: algosdk.getApplicationAddress(gasStationId),
+    sender: ROOT_ACCOUNT.addr,
+    receiver: algosdk.getApplicationAddress(gasStationId),
     amount: 100_000,
     suggestedParams,
   });
@@ -141,8 +141,8 @@ export async function waitRounds(rounds: number, account: algosdk.Account) {
   const suggestedParams = await algod.getTransactionParams().do();
   for (let i = 0; i < rounds; i++) {
     const tx = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-      from: account.addr,
-      to: account.addr,
+      sender: account.addr,
+      receiver: account.addr,
       amount: 0,
       suggestedParams,
       note: encode(i.toString()),
@@ -153,5 +153,5 @@ export async function waitRounds(rounds: number, account: algosdk.Account) {
 
 export async function getLastBlock() {
   const statusData = await algod.status().do();
-  return statusData["last-round"];
+  return statusData.lastRound;
 }

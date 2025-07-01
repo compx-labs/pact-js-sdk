@@ -10,8 +10,10 @@ const INCREASE_OPCODE_QUOTA_SIG = new Uint8Array([255, 222, 99, 120]);
 export class GasStation {
   appAddress: string;
 
-  constructor(public appId: number) {
-    this.appAddress = algosdk.getApplicationAddress(appId);
+  constructor(public appId: bigint) {
+    this.appAddress = algosdk.encodeAddress(
+      algosdk.getApplicationAddress(appId).publicKey,
+    );
   }
 
   buildFundTx(
@@ -20,8 +22,8 @@ export class GasStation {
     suggestedParams: algosdk.SuggestedParams,
   ): algosdk.Transaction {
     return algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-      from: sender,
-      to: this.appAddress,
+      sender: sender,
+      receiver: this.appAddress,
       amount,
       suggestedParams,
     });
@@ -34,7 +36,7 @@ export class GasStation {
     extra_fee = 0,
   ): algosdk.Transaction {
     return algosdk.makeApplicationNoOpTxnFromObject({
-      from: sender,
+      sender: sender,
       appIndex: this.appId,
       appArgs: [INCREASE_OPCODE_QUOTA_SIG, ...encodeArray([count, 0])],
       suggestedParams: spFee(suggestedParams, (count + 1) * 1000 + extra_fee),
@@ -44,7 +46,7 @@ export class GasStation {
 
 let _gas_station: GasStation | null = null;
 
-export function setGasStation(appId: number) {
+export function setGasStation(appId: bigint) {
   _gas_station = new GasStation(appId);
 }
 

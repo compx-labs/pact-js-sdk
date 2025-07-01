@@ -2,7 +2,7 @@
 This module container utilities for interacting with the farm contract.
  */
 
-import algosdk, { Account } from "algosdk";
+import algosdk from "algosdk";
 
 import { Asset, fetchAssetByIndex, getCachedAsset } from "../asset";
 import { decodeUint64Array, encodeArray } from "../encoding";

@@ -95,7 +95,7 @@ export class PactClient {
    *
    * @returns Promise that will return an [[Asset]] object for the id.
    */
-  fetchAsset(assetIndex: number): Promise<Asset> {
+  fetchAsset(assetIndex: bigint): Promise<Asset> {
     return fetchAssetByIndex(this.algod, assetIndex);
   }
 

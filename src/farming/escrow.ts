@@ -31,7 +31,7 @@ const SEND_MESSAGE_SIG = new Uint8Array([155, 228, 40, 27]);
 const WITHDRAW_ALGOS_SIG = new Uint8Array([183, 88, 216, 209]);
 
 export type EscrowInternalState = {
-  masterApp: number;
+  masterApp: bigint;
 };
 
 export async function fetchEscrowApprovalProgram(

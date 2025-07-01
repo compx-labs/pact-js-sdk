@@ -21,7 +21,7 @@ export type AssertRewardsOptions = {
   account?: algosdk.Account;
 };
 
-export function deployFarm(account: algosdk.Account, stakedAssetId: number) {
+export function deployFarm(account: algosdk.Account, stakedAssetId: bigint) {
   return deployContract(account, [
     "farm",
     `--staked-asset-id=${stakedAssetId}`,
@@ -103,13 +103,14 @@ export class FarmingTestBed {
     const newUserBalance = await fetchUserAssetsBalance(this.farm, account);
     const allAssets = [...this.farm.state.rewardAssets, this.farm.stakedAsset];
     for (const asset of allAssets) {
-      if (asset.index === 0) {
+      if (asset.index === 0n) {
         // Cannot test ALGO in a reliable way because of farm rewards being distributed.
         continue;
       }
       const expectedAmount =
-        (oldUserBalance[asset.index] ?? 0) + (rewards[asset.index] ?? 0);
-      const amount = newUserBalance[asset.index] ?? 0;
+        (oldUserBalance[Number(asset.index)] ?? 0) +
+        Number(rewards[Number(asset.index)] ?? 0);
+      const amount = newUserBalance[Number(asset.index)] ?? 0;
       if (amount !== expectedAmount) {
         throw Error(
           `Expected ${expectedAmount} ${asset}, got ${amount} ${asset}.`,
@@ -194,7 +195,7 @@ export async function makeNewAccountForFarm(
 
   // Opt-in user to assets.
   for (const asset of [farm.stakedAsset, ...rewardAssets]) {
-    if (asset.index !== 0) {
+    if (asset.index !== 0n) {
       const optinTx = asset.buildOptInTx(
         userAccount.addr.toString(),
         farm.suggestedParams,
@@ -232,6 +233,10 @@ export async function deployEscrowForAccount(
     .do();
   const appId = txinfo.applicationIndex;
 
+  if (typeof appId !== "bigint") {
+    throw new Error("Failed to retrieve escrow appId from transaction info.");
+  }
+
   return farm.fetchEscrowById(appId);
 }
 
@@ -251,7 +256,9 @@ export async function fetchUserAssetsBalance(
 ): Promise<Record<number, number>> {
   const balances: Record<number, number> = {};
   for (const asset of [...farm.state.rewardAssets, farm.stakedAsset]) {
-    balances[asset.index] = (await asset.getHolding(account.addr)) ?? 0;
+    balances[Number(asset.index)] =
+      (await asset.getHolding(algosdk.encodeAddress(account.addr.publicKey))) ??
+      0;
   }
   return balances;
 }
