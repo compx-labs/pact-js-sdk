@@ -27,7 +27,7 @@ export function buildContantProductTxGroup(
     1,
     2,
     0,
-    poolParams.primaryAssetId === 0,
+    poolParams.primaryAssetId === 0n,
   );
 
   const fundTx = algosdk.makePaymentTxnWithSuggestedParamsFromObject({

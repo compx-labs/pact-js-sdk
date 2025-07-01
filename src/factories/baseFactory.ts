@@ -25,9 +25,9 @@ export function getContractDeployCost(
 }
 
 export type PoolBuildParams = {
-  primaryAssetId: number;
-  secondaryAssetId: number;
-  feeBps: number;
+  primaryAssetId: bigint;
+  secondaryAssetId: bigint;
+  feeBps: bigint;
 };
 
 export type PoolParams = PoolBuildParams & {
@@ -36,7 +36,7 @@ export type PoolParams = PoolBuildParams & {
 
 export type FactoryState = {
   poolVersion: number;
-  allowedFeeBps: number[];
+  allowedFeeBps: bigint[];
 };
 
 export class PoolParamsWrapper {
@@ -44,7 +44,7 @@ export class PoolParamsWrapper {
 
   constructor(public params: PoolParams) {}
 
-  asTuple(): [number, number, number, number] {
+  asTuple(): [bigint, bigint, bigint, number] {
     return [
       this.params.primaryAssetId,
       this.params.secondaryAssetId,
@@ -60,9 +60,9 @@ export class PoolParamsWrapper {
   static fromBoxName(nameEncoded: Uint8Array): PoolParamsWrapper {
     const values = PoolParamsWrapper.abi.decode(nameEncoded);
     const params: PoolParams = {
-      primaryAssetId: Number(values[0]),
-      secondaryAssetId: Number(values[1]),
-      feeBps: Number(values[2]),
+      primaryAssetId: values[0] as bigint,
+      secondaryAssetId: values[1] as bigint,
+      feeBps: values[2] as bigint,
       version: Number(values[3]),
     };
     return new PoolParamsWrapper(params);
