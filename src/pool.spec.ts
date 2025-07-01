@@ -304,9 +304,9 @@ describe("Constant product pool", () => {
 
     // Add liquidity.
     const liquidityAddition = pool.prepareAddLiquidity({
-      primaryAssetAmount: 100_000,
-      secondaryAssetAmount: 100_000,
-      slippagePct: 0,
+      primaryAssetAmount: 100_000n,
+      secondaryAssetAmount: 100_000n,
+      slippagePct: 0n,
     });
     const addLiqTxGroup = await liquidityAddition.prepareTxGroup(
       algosdk.encodeAddress(account.addr.publicKey),
@@ -325,24 +325,24 @@ describe("Constant product pool", () => {
     // Remove liquidity.
     const removeLiqTxGroup = await pool.prepareRemoveLiquidityTxGroup({
       address: algosdk.encodeAddress(account.addr.publicKey),
-      amount: 10_000,
+      amount: 10_000n,
     });
     expect(removeLiqTxGroup.transactions.length).toBe(2);
     await signAndSend(removeLiqTxGroup, account);
     await pool.updateState();
     expect(pool.state).toEqual({
-      totalLiquidity: 90_000,
-      totalPrimary: 90_000,
-      totalSecondary: 90_000,
-      primaryAssetPrice: 1,
-      secondaryAssetPrice: 1,
+      totalLiquidity: 90_000n,
+      totalPrimary: 90_000n,
+      totalSecondary: 90_000n,
+      primaryAssetPrice: 1n,
+      secondaryAssetPrice: 1n,
     });
 
     // Swap algo.
     const algoSwap = await pool.prepareSwap({
       asset: algo,
-      amount: 20_000,
-      slippagePct: 2,
+      amount: 20_000n,
+      slippagePct: 2n,
     });
     const algoSwapTxGroup = await algoSwap.prepareTxGroup(
       algosdk.encodeAddress(account.addr.publicKey),
@@ -359,8 +359,8 @@ describe("Constant product pool", () => {
     // Swap secondary.
     const coinSwap = await pool.prepareSwap({
       asset: coin,
-      amount: 50_000,
-      slippagePct: 2,
+      amount: 50_000n,
+      slippagePct: 2n,
     });
     const coinSwapTxGroup = await coinSwap.prepareTxGroup(
       algosdk.encodeAddress(account.addr.publicKey),
@@ -403,8 +403,8 @@ describe("Constant product pool", () => {
 
     const coinBIndex = await createAsset(account, {
       name: "coinA",
-      decimals: 19,
-      totalIssuance: 10 ** 19,
+      decimals: 19n,
+      totalIssuance: 10n ** 19n,
     });
 
     const appId = await deployConstantProductContract(
@@ -418,11 +418,11 @@ describe("Constant product pool", () => {
     expect(pool.secondaryAsset.decimals).toBe(19);
 
     expect(pool.state).toEqual({
-      totalLiquidity: 0,
-      totalPrimary: 0,
-      totalSecondary: 0,
-      primaryAssetPrice: 0,
-      secondaryAssetPrice: 0,
+      totalLiquidity: 0n,
+      totalPrimary: 0n,
+      totalSecondary: 0n,
+      primaryAssetPrice: 0n,
+      secondaryAssetPrice: 0n,
     });
 
     // Opt in for liquidity asset.
@@ -433,29 +433,29 @@ describe("Constant product pool", () => {
 
     // Add liquidity.
     const liquidityAddition = pool.prepareAddLiquidity({
-      primaryAssetAmount: 100_000,
-      secondaryAssetAmount: 10 ** 18,
-      slippagePct: 0,
+      primaryAssetAmount: 100_000n,
+      secondaryAssetAmount: 10n ** 18n,
+      slippagePct: 0n,
     });
     const addLiqTxGroup = await liquidityAddition.prepareTxGroup(
       algosdk.encodeAddress(account.addr.publicKey),
     );
-    expect(addLiqTxGroup.transactions.length).toBe(3);
+    expect(addLiqTxGroup.transactions.length).toBe(3n);
     await signAndSend(addLiqTxGroup, account);
     await pool.updateState();
-    expect(pool.state.totalSecondary).toBe(10 ** 18);
+    expect(pool.state.totalSecondary).toBe(10n ** 18n);
     let lastState = pool.state;
 
     // Swap algo.
     const algoSwap = await pool.prepareSwap({
       asset: algo,
-      amount: 20_000,
-      slippagePct: 2,
+      amount: 20_000n,
+      slippagePct: 2n,
     });
     const algoSwapTxGroup = await algoSwap.prepareTxGroup(
       algosdk.encodeAddress(account.addr.publicKey),
     );
-    expect(algoSwapTxGroup.transactions.length).toBe(2);
+    expect(algoSwapTxGroup.transactions.length).toBe(2n);
     await signAndSend(algoSwapTxGroup, account);
     await pool.updateState();
     expect(pool.state.totalPrimary).toBeGreaterThan(lastState.totalPrimary);
@@ -466,8 +466,8 @@ describe("Constant product pool", () => {
     // Swap secondary.
     const coinSwap = await pool.prepareSwap({
       asset: pool.secondaryAsset,
-      amount: 10 ** 18,
-      slippagePct: 2,
+      amount: 10n ** 18n,
+      slippagePct: 2n,
     });
     const coinSwapTxGroup = await coinSwap.prepareTxGroup(
       algosdk.encodeAddress(account.addr.publicKey),
@@ -481,12 +481,12 @@ describe("Constant product pool", () => {
     // Remove liquidity.
     const removeLiqTxGroup = await pool.prepareRemoveLiquidityTxGroup({
       address: algosdk.encodeAddress(account.addr.publicKey),
-      amount: pool.state.totalLiquidity - 1000,
+      amount: pool.state.totalLiquidity - 1000n,
     });
-    expect(removeLiqTxGroup.transactions.length).toBe(2);
+    expect(removeLiqTxGroup.transactions.length).toBe(2n);
     await signAndSend(removeLiqTxGroup, account);
     await pool.updateState();
-    expect(pool.state.totalLiquidity).toBe(1000);
+    expect(pool.state.totalLiquidity).toBe(1000n);
   });
 
   it("Pool e2e scenario triggering slippage error", async () => {
@@ -504,35 +504,35 @@ describe("Constant product pool", () => {
 
     // Add liquidity.
     const liquidityAddition = pool.prepareAddLiquidity({
-      primaryAssetAmount: 100_000,
-      secondaryAssetAmount: 100_000,
-      slippagePct: 0,
+      primaryAssetAmount: 100_000n,
+      secondaryAssetAmount: 100_000n,
+      slippagePct: 0n,
     });
     const addLiqTxGroup = await liquidityAddition.prepareTxGroup(
       algosdk.encodeAddress(account.addr.publicKey),
     );
-    expect(addLiqTxGroup.transactions.length).toBe(3);
+    expect(addLiqTxGroup.transactions.length).toBe(3n);
     await signAndSend(addLiqTxGroup, account);
     await pool.updateState();
     const lastState = pool.state;
 
     // Second add liquidity that should fail when executed after swap.
     const secondLiquidityAddition = pool.prepareAddLiquidity({
-      primaryAssetAmount: 50_000,
-      secondaryAssetAmount: 50_000,
-      slippagePct: 0,
+      primaryAssetAmount: 50_000n,
+      secondaryAssetAmount: 50_000n,
+      slippagePct: 0n,
     });
 
     // Swap algo.
     const algoSwap = pool.prepareSwap({
       asset: algo,
-      amount: 20_000,
-      slippagePct: 2,
+      amount: 20_000n,
+      slippagePct: 2n,
     });
     const algoSwapTxGroup = await algoSwap.prepareTxGroup(
       algosdk.encodeAddress(account.addr.publicKey),
     );
-    expect(algoSwapTxGroup.transactions.length).toBe(2);
+    expect(algoSwapTxGroup.transactions.length).toBe(2n);
     await signAndSend(algoSwapTxGroup, account);
     await pool.updateState();
     expect(pool.state.totalPrimary).toBeGreaterThan(lastState.totalPrimary);
@@ -542,7 +542,7 @@ describe("Constant product pool", () => {
     const failingAddLiqTxGroup = await secondLiquidityAddition.prepareTxGroup(
       algosdk.encodeAddress(account.addr.publicKey),
     );
-    expect(failingAddLiqTxGroup.transactions.length).toBe(3);
+    expect(failingAddLiqTxGroup.transactions.length).toBe(3n);
     await expect(() =>
       signAndSend(failingAddLiqTxGroup, account),
     ).rejects.toThrow("would result negative");
@@ -560,30 +560,30 @@ describe("Stableswap pool", () => {
     expect(pool.secondaryAsset.index).toBe(testBed.coin.index);
 
     expect(pool.poolType).toBe("STABLESWAP");
-    expect(pool.version).toBe(1);
+    expect(pool.version).toBe(1n);
 
     const timestamp = pool.internalState.INITIAL_A_TIME;
 
     expect(pool.internalState).toEqual({
-      A: 0,
+      A: 0n,
       ADMIN: testBed.account.addr,
       ASSET_A: pool.primaryAsset.index,
       ASSET_B: pool.secondaryAsset.index,
       LTID: pool.liquidityAsset.index,
-      B: 0,
+      B: 0n,
       CONTRACT_NAME: "[SI] PACT AMM",
       FEE_BPS: pool.feeBps,
-      L: 0,
-      PACT_FEE_BPS: 0,
-      PRIMARY_FEES: 0,
-      SECONDARY_FEES: 0,
+      L: 0n,
+      PACT_FEE_BPS: 0n,
+      PRIMARY_FEES: 0n,
+      SECONDARY_FEES: 0n,
       TREASURY: testBed.account.addr,
-      VERSION: 1,
-      INITIAL_A: 80000,
+      VERSION: 1n,
+      INITIAL_A: 80000n,
       INITIAL_A_TIME: timestamp,
-      FUTURE_A: 80000,
+      FUTURE_A: 80000n,
       FUTURE_A_TIME: timestamp,
-      PRECISION: 1000,
+      PRECISION: 1000n,
     });
   });
 
@@ -593,13 +593,13 @@ describe("Stableswap pool", () => {
 
     const coinAIndex = await createAsset(account, {
       name: "COIN_A",
-      decimals: 6,
-      totalIssuance: 10 ** 10,
+      decimals: 6n,
+      totalIssuance: 10n ** 10n,
     });
     const coinBIndex = await createAsset(account, {
       name: "COIN_B",
-      decimals: 6,
-      totalIssuance: 10 ** 10,
+      decimals: 6n,
+      totalIssuance: 10n ** 10n,
     });
 
     const appId = await deployStableswapContract(
@@ -611,11 +611,11 @@ describe("Stableswap pool", () => {
     const pool = await pact.fetchPoolById(appId);
 
     expect(pool.state).toEqual({
-      totalLiquidity: 0,
-      totalPrimary: 0,
-      totalSecondary: 0,
-      primaryAssetPrice: 0,
-      secondaryAssetPrice: 0,
+      totalLiquidity: 0n,
+      totalPrimary: 0n,
+      totalSecondary: 0n,
+      primaryAssetPrice: 0n,
+      secondaryAssetPrice: 0n,
     });
 
     // Opt in for liquidity asset.
@@ -626,45 +626,45 @@ describe("Stableswap pool", () => {
 
     // Add liquidity.
     const liquidityAddition = pool.prepareAddLiquidity({
-      primaryAssetAmount: 100_000_000,
-      secondaryAssetAmount: 100_000_000,
-      slippagePct: 0,
+      primaryAssetAmount: 100_000_000n,
+      secondaryAssetAmount: 100_000_000n,
+      slippagePct: 0n,
     });
     const addLiqTxGroup = await liquidityAddition.prepareTxGroup(
       algosdk.encodeAddress(account.addr.publicKey),
     );
-    expect(addLiqTxGroup.transactions.length).toBe(3);
+    expect(addLiqTxGroup.transactions.length).toBe(3n);
     await signAndSend(addLiqTxGroup, account);
     await pool.updateState();
     expect(pool.state).toMatchObject({
-      totalLiquidity: 100_000_000,
-      totalPrimary: 100_000_000,
-      totalSecondary: 100_000_000,
+      totalLiquidity: 100_000_000n,
+      totalPrimary: 100_000_000n,
+      totalSecondary: 100_000_000n,
     });
-    expect(pool.state.primaryAssetPrice.toFixed(2)).toBe("1.00");
-    expect(pool.state.secondaryAssetPrice.toFixed(2)).toBe("1.00");
+    expect(Number(pool.state.primaryAssetPrice).toFixed(2)).toBe("1.00");
+    expect(Number(pool.state.secondaryAssetPrice).toFixed(2)).toBe("1.00");
 
     // Remove liquidity.
     const removeLiqTxGroup = await pool.prepareRemoveLiquidityTxGroup({
       address: algosdk.encodeAddress(account.addr.publicKey),
-      amount: 1_000_000,
+      amount: 1_000_000n,
     });
-    expect(removeLiqTxGroup.transactions.length).toBe(2);
+    expect(removeLiqTxGroup.transactions.length).toBe(2n);
     await signAndSend(removeLiqTxGroup, account);
     await pool.updateState();
     expect(pool.state).toMatchObject({
-      totalLiquidity: 99_000_000,
-      totalPrimary: 99_000_000,
-      totalSecondary: 99_000_000,
+      totalLiquidity: 99_000_000n,
+      totalPrimary: 99_000_000n,
+      totalSecondary: 99_000_000n,
     });
-    expect(pool.state.primaryAssetPrice.toFixed(2)).toBe("1.00");
-    expect(pool.state.secondaryAssetPrice.toFixed(2)).toBe("1.00");
+    expect(Number(pool.state.primaryAssetPrice).toFixed(2)).toBe("1.00");
+    expect(Number(pool.state.secondaryAssetPrice).toFixed(2)).toBe("1.00");
 
     // Swap coinA.
     const coinASwap = await pool.prepareSwap({
       asset: pool.primaryAsset,
-      amount: 2_000_000,
-      slippagePct: 2,
+      amount: 2_000_000n,
+      slippagePct: 2n,
     });
     const algoSwapTxGroup = await coinASwap.prepareTxGroup(
       algosdk.encodeAddress(account.addr.publicKey),
@@ -675,14 +675,14 @@ describe("Stableswap pool", () => {
     expect(pool.state.totalLiquidity).toBe(99_000_000);
     expect(pool.state.totalPrimary > 99_000_000).toBe(true);
     expect(pool.state.totalSecondary < 99_000_000).toBe(true);
-    expect(pool.state.primaryAssetPrice.toFixed(2)).toBe("1.00");
-    expect(pool.state.secondaryAssetPrice.toFixed(2)).toBe("1.00");
+    expect(Number(pool.state.primaryAssetPrice).toFixed(2)).toBe("1.00");
+    expect(Number(pool.state.secondaryAssetPrice).toFixed(2)).toBe("1.00");
 
     // Swap coinB.
     const coinBSwap = await pool.prepareSwap({
       asset: pool.secondaryAsset,
-      amount: 5_000_000,
-      slippagePct: 2,
+      amount: 5_000_000n,
+      slippagePct: 2n,
     });
     const coinSwapTxGroup = await coinBSwap.prepareTxGroup(
       algosdk.encodeAddress(account.addr.publicKey),
@@ -690,50 +690,50 @@ describe("Stableswap pool", () => {
     await signAndSend(coinSwapTxGroup, account);
     await pool.updateState();
     expect(pool.state.totalLiquidity).toBe(99_000_000);
-    expect(pool.state.totalPrimary < 99_000_000).toBe(true);
-    expect(pool.state.totalSecondary > 99_000_000).toBe(true);
-    expect(pool.state.primaryAssetPrice.toFixed(2)).toBe("1.00");
-    expect(pool.state.secondaryAssetPrice.toFixed(2)).toBe("1.00");
+    expect(pool.state.totalPrimary < 99_000_000n).toBe(true);
+    expect(pool.state.totalSecondary > 99_000_000n).toBe(true);
+    expect(Number(pool.state.primaryAssetPrice).toFixed(2)).toBe("1.00");
+    expect(Number(pool.state.secondaryAssetPrice).toFixed(2)).toBe("1.00");
 
     // Only big swaps should affect the price.
     const bigCoinBSwap = await pool.prepareSwap({
       asset: pool.secondaryAsset,
-      amount: 90_000_000,
-      slippagePct: 2,
+      amount: 90_000_000n,
+      slippagePct: 2n,
     });
     const bigCoinSwapTxGroup = await bigCoinBSwap.prepareTxGroup(
       algosdk.encodeAddress(account.addr.publicKey),
     );
     await signAndSend(bigCoinSwapTxGroup, account);
     await pool.updateState();
-    expect(pool.state.primaryAssetPrice.toFixed(2)).toBe("1.61");
-    expect(pool.state.secondaryAssetPrice.toFixed(2)).toBe("0.62");
+    expect(Number(pool.state.primaryAssetPrice).toFixed(2)).toBe("1.61");
+    expect(Number(pool.state.secondaryAssetPrice).toFixed(2)).toBe("0.62");
 
     // Check different amplifiers.
     const poolParams = pool.params as StableswapPoolParams;
-    poolParams.futureA = 1;
+    poolParams.futureA = 1n;
     pool.state = pool["parseInternalState"](pool.internalState);
-    expect(pool.state.primaryAssetPrice.toFixed(2)).toBe("13.97");
-    expect(pool.state.secondaryAssetPrice.toFixed(2)).toBe("0.07");
+    expect(Number(pool.state.primaryAssetPrice).toFixed(2)).toBe("13.97");
+    expect(Number(pool.state.secondaryAssetPrice).toFixed(2)).toBe("0.07");
 
-    poolParams.futureA = 1000;
+    poolParams.futureA = 1000n;
     pool.state = pool["parseInternalState"](pool.internalState);
-    expect(pool.state.primaryAssetPrice.toFixed(2)).toBe("5.15");
-    expect(pool.state.secondaryAssetPrice.toFixed(2)).toBe("0.20");
+    expect(Number(pool.state.primaryAssetPrice).toFixed(2)).toBe("5.15");
+    expect(Number(pool.state.secondaryAssetPrice).toFixed(2)).toBe("0.20");
 
-    poolParams.futureA = 5 * 1000;
+    poolParams.futureA = 5n * 1000n;
     pool.state = pool["parseInternalState"](pool.internalState);
-    expect(pool.state.primaryAssetPrice.toFixed(2)).toBe("2.78");
-    expect(pool.state.secondaryAssetPrice.toFixed(2)).toBe("0.36");
+    expect(Number(pool.state.primaryAssetPrice).toFixed(2)).toBe("2.78");
+    expect(Number(pool.state.secondaryAssetPrice).toFixed(2)).toBe("0.36");
 
-    poolParams.futureA = 100 * 1000;
+    poolParams.futureA = 100n * 1000n;
     pool.state = pool["parseInternalState"](pool.internalState);
-    expect(pool.state.primaryAssetPrice.toFixed(2)).toBe("1.14");
-    expect(pool.state.secondaryAssetPrice.toFixed(2)).toBe("0.88");
+    expect(Number(pool.state.primaryAssetPrice).toFixed(2)).toBe("1.14");
+    expect(Number(pool.state.secondaryAssetPrice).toFixed(2)).toBe("0.88");
 
-    poolParams.futureA = 1000 * 1000;
+    poolParams.futureA = 1000n * 1000n;
     pool.state = pool["parseInternalState"](pool.internalState);
-    expect(pool.state.primaryAssetPrice.toFixed(2)).toBe("1.01");
-    expect(pool.state.secondaryAssetPrice.toFixed(2)).toBe("0.99");
+    expect(Number(pool.state.primaryAssetPrice).toFixed(2)).toBe("1.01");
+    expect(Number(pool.state.secondaryAssetPrice).toFixed(2)).toBe("0.99");
   });
 });

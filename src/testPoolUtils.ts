@@ -100,9 +100,9 @@ export function deployExchangeContract(
 export async function addLiquidity(
   account: algosdk.Account,
   pool: Pool,
-  primaryAssetAmount = 10_000,
-  secondaryAssetAmount = 10_000,
-  slippagePct = 0,
+  primaryAssetAmount = 10_000n,
+  secondaryAssetAmount = 10_000n,
+  slippagePct = 0n,
 ) {
   const optInTx = await pool.liquidityAsset.prepareOptInTx(
     algosdk.encodeAddress(account.addr.publicKey),

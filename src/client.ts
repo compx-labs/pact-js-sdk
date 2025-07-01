@@ -158,7 +158,7 @@ export class PactClient {
    *
    * @returns The Folks Finance lending pool for the given application id.
    */
-  fetchFolksLendingPool(appId: number): Promise<FolksLendingPool> {
+  fetchFolksLendingPool(appId: bigint): Promise<FolksLendingPool> {
     return fetchFolksLendingPool(this.algod, appId);
   }
 

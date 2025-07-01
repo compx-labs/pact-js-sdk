@@ -24,23 +24,23 @@ const OPT_IN_SIG = new Uint8Array([133, 14, 253, 26]);
 const ABI_BYTE = new algosdk.ABIUintType(8);
 
 // call(1000) + 2 * wrap(4000) + refund(1000)
-const PRE_ADD_LIQ_FEE = 10_000;
+const PRE_ADD_LIQ_FEE = 10_000n;
 
 // call(1000) + 2 * wrap(4000)
-const ADD_LIQ_FEE = 9000;
+const ADD_LIQ_FEE = 9000n;
 
 // call(1000) + transfer_PLP(1000) + rem_liq(3000)
-const REM_LIQ_FEE = 5000;
+const REM_LIQ_FEE = 5000n;
 
 // call(1000) + 2 * unwrap(5000) + 2 * transfer_asset(1000)
-const POST_REM_LIQ_FEE = 13_000;
+const POST_REM_LIQ_FEE = 13_000n;
 
 // call(1000) + wrap(4000) + swap(3000) + unwrap(5000) + transfer_asset(1000)
-const SWAP_FEE = 14_000;
+const SWAP_FEE = 14_000n;
 
-const SECONDS_IN_YEAR = 365 * 24 * 60 * 60;
-const ONE_14_DP = 1e14;
-const ONE_16_DP = 1e16;
+const SECONDS_IN_YEAR = 365n * 24n * 60n * 60n;
+const ONE_14_DP = 1n * 10n ** 14n;
+const ONE_16_DP = 1n * 10n ** 16n;
 
 export type AddLendingLiquidityTxOptions = {
   liquidityAddition: LendingLiquidityAddition;
@@ -51,7 +51,7 @@ export type AddLendingLiquidityTxOptions = {
 
 export type OptInAssetToAdapterTxOptions = {
   address: string;
-  assetIds: number[];
+  assetIds: bigint[];
 };
 
 /**
@@ -69,19 +69,19 @@ export type LendingSwap = {
   /**
    * Amount of original asset deposited by the user.
    */
-  amountDeposited: number;
+  amountDeposited: bigint;
 
   /**
    * Amount of original asset received by the user.
    */
-  amountReceived: number;
+  amountReceived: bigint;
 
   /**
    * Minimal amount of original asset received by the user after the slippage.
    */
-  minimumAmountReceived: number;
+  minimumAmountReceived: bigint;
 
-  txFee: number;
+  txFee: bigint;
 };
 
 export type LendingSwapTxOptions = {
@@ -93,7 +93,7 @@ export class FolksLendingPool {
   escrowAddress: string;
 
   /** The conversion calculations are dependant of precise timestamps. The Folks contract uses the last block timestamp for this value. The SDK, by default, uses current system time. This field allows to override the default behavior. This is needed in unit tests and normal users should leave this field as null. */
-  lastTimestamp: number | null = null;
+  lastTimestamp: bigint | null = null;
 
   constructor(
     public algod: algosdk.Algodv2,
@@ -110,12 +110,17 @@ export class FolksLendingPool {
     );
   }
 
-  private calcDepositInterestIndex(timestamp: number): number {
-    const dt = Math.floor(
-      timestamp - Math.floor(this.updatedAt.getTime() / 1000),
+  private calcDepositInterestIndex(timestamp: bigint): bigint {
+    const dt = timestamp - BigInt(Math.floor(this.updatedAt.getTime() / 1000));
+    return (
+      (this.depositInterestIndex *
+        (BigInt(ONE_16_DP) +
+          (this.depositInterestRate * dt) / BigInt(SECONDS_IN_YEAR))) /
+      BigInt(ONE_16_DP)
     );
-    return Math.floor(
-      Number(
+  }
+
+  /**
         (this.depositInterestIndex *
           (BigInt(ONE_16_DP) +
             (this.depositInterestRate * BigInt(dt)) /
@@ -128,25 +133,25 @@ export class FolksLendingPool {
   /**
    * Calculates the amount fAsset received when depositing original asset.
    */
-  convertDeposit(amount: number): number {
+  convertDeposit(amount: bigint): bigint {
     const interestIndex = this.calcDepositInterestIndex(
-      this.getLastTimestamp(),
+      BigInt(this.getLastTimestamp()),
     );
-    return Math.floor((amount * ONE_14_DP) / interestIndex);
+    return (amount * ONE_14_DP) / interestIndex;
   }
 
   /**
    * Calculates the amount original asset received when depositing fAsset.
    */
-  convertWithdraw(amount: number, options: { ceil?: boolean } = {}): number {
+  convertWithdraw(amount: bigint, options: { ceil?: boolean } = {}): bigint {
     const interestIndex = this.calcDepositInterestIndex(
-      this.getLastTimestamp(),
+      BigInt(this.getLastTimestamp()),
     );
     const converted = (amount * interestIndex) / ONE_14_DP;
     if (options.ceil) {
-      return Math.ceil(converted);
+      return BigInt(Math.ceil(Number(converted)));
     }
-    return Math.floor(converted);
+    return BigInt(Math.floor(Number(converted)));
   }
 
   getLastTimestamp(): number {
@@ -206,9 +211,9 @@ export class LendingLiquidityAddition {
 
   constructor(
     public lendingPoolAdapter: FolksLendingPoolAdapter,
-    public primaryAssetAmount: number,
-    public secondaryAssetAmount: number,
-    public slippagePct: number,
+    public primaryAssetAmount: bigint,
+    public secondaryAssetAmount: bigint,
+    public slippagePct: bigint,
   ) {
     this.liquidityAddition = new LiquidityAddition(
       this.lendingPoolAdapter.pactPool,
@@ -488,7 +493,7 @@ export class FolksLendingPoolAdapter {
       receivedLendingPool = this.secondaryLendingPool;
     }
 
-    let fAmount: number;
+    let fAmount: bigint;
     if (options.swapForExact) {
       fAmount = receivedLendingPool.convertDeposit(options.amount);
     } else {
@@ -504,8 +509,8 @@ export class FolksLendingPoolAdapter {
     const assetDeposited = this.fAssetToOriginalAsset(fSwap.assetDeposited);
     const assetReceived = this.fAssetToOriginalAsset(fSwap.assetReceived);
 
-    let amountDeposited: number;
-    let amountReceived: number;
+    let amountDeposited: bigint;
+    let amountReceived: bigint;
     if (options.swapForExact) {
       amountDeposited = depositedLendingPool.convertWithdraw(
         fSwap.effect.amountDeposited,
@@ -523,7 +528,7 @@ export class FolksLendingPoolAdapter {
       fSwap.effect.minimumAmountReceived,
     );
 
-    const txFee = SWAP_FEE + 1000; // + deposit(1000)
+    const txFee = SWAP_FEE + 1000n; // + deposit(1000)
 
     return {
       fSwap,
@@ -620,7 +625,10 @@ export class FolksLendingPoolAdapter {
 
     const tx2 = algosdk.makeApplicationNoOpTxnFromObject({
       sender: address,
-      suggestedParams: spFee(suggestedParams, 1000 + 1000 * assetIds.length),
+      suggestedParams: spFee(
+        suggestedParams,
+        1000n + 1000n * BigInt(assetIds.length),
+      ),
       appIndex: this.appId,
       appArgs: [
         OPT_IN_SIG,

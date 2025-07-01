@@ -59,9 +59,9 @@ describe("factory", () => {
     await algod.sendRawTransaction(optInTx.signTxn(admin.sk)).do();
 
     const liquidityAddition = pool.prepareAddLiquidity({
-      primaryAssetAmount: 1000,
-      secondaryAssetAmount: 2000,
-      slippagePct: 0,
+      primaryAssetAmount: 1000n,
+      secondaryAssetAmount: 2000n,
+      slippagePct: 0n,
     });
     const txGroup = await pool.prepareAddLiquidityTxGroup({
       address: algosdk.encodeAddress(admin.addr.publicKey),
@@ -136,9 +136,9 @@ describe("factory", () => {
     await algod.sendRawTransaction(optInTx.signTxn(admin.sk)).do();
 
     const liquidityAddition = pool.prepareAddLiquidity({
-      primaryAssetAmount: 10_000,
-      secondaryAssetAmount: 500,
-      slippagePct: 0,
+      primaryAssetAmount: 10_000n,
+      secondaryAssetAmount: 500n,
+      slippagePct: 0n,
     });
     const txGroup = await pool.prepareAddLiquidityTxGroup({
       address: algosdk.encodeAddress(admin.addr.publicKey),

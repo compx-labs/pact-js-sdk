@@ -26,15 +26,15 @@ export async function signAndSend(
 export type AssetCreateOptions = {
   name: string | undefined;
   unitName: string | null;
-  decimals: number;
-  totalIssuance: number;
+  decimals: bigint;
+  totalIssuance: bigint;
 };
 
 const DEFAULT_ASSET_CREATE_OPTIONS: AssetCreateOptions = {
   name: "COIN",
   unitName: null,
-  decimals: 6,
-  totalIssuance: 100_000_000,
+  decimals: 60n,
+  totalIssuance: 100_000_000n,
 };
 
 export async function createAsset(

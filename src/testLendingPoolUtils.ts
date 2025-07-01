@@ -39,14 +39,14 @@ async function getCompiledProgram(tealPath: string): Promise<Uint8Array> {
   return PROGRAMS_CACHE[tealPath];
 }
 
-async function deploy_folks_manager(): Promise<number> {
+async function deploy_folks_manager(): Promise<bigint> {
   const sp = await algod.getTransactionParams().do();
 
   const emptyProgram = await getCompiledProgram("contract-mocks/empty.teal");
 
   const createTx = algosdk.makeApplicationCreateTxnFromObject({
-    from: ROOT_ACCOUNT.addr,
-    suggestedParams: spFee(sp, 2000),
+    sender: ROOT_ACCOUNT.addr,
+    suggestedParams: spFee(sp, 2000n),
     onComplete: algosdk.OnApplicationComplete.NoOpOC,
     approvalProgram: emptyProgram,
     clearProgram: emptyProgram,
@@ -58,21 +58,21 @@ async function deploy_folks_manager(): Promise<number> {
 
   const tx = await signAndSend(createTx, ROOT_ACCOUNT);
 
-  const txinfo = await algod.pendingTransactionInformation(tx.txId).do();
-  return txinfo["application-index"];
+  const txinfo = await algod.pendingTransactionInformation(tx.txid).do();
+  return txinfo.applicationIndex ?? 0n;
 }
 
 export type FolksLendingPoolDeployOptions = {
-  originalAssetId: number;
-  managerId: number;
-  interestRate: number;
-  interestIndex: number;
-  updatedAt: number;
+  originalAssetId: bigint;
+  managerId: bigint;
+  interestRate: bigint;
+  interestIndex: bigint;
+  updatedAt: bigint;
 };
 
 async function deployFolksLendingPool(
   options: FolksLendingPoolDeployOptions,
-): Promise<number> {
+): Promise<bigint> {
   const sp = await algod.getTransactionParams().do();
 
   const approvalProgram = await getCompiledProgram(
@@ -82,8 +82,8 @@ async function deployFolksLendingPool(
   const clearProgram = await getCompiledProgram("contract-mocks/empty.teal");
 
   const createTx = algosdk.makeApplicationCreateTxnFromObject({
-    from: ROOT_ACCOUNT.addr,
-    suggestedParams: spFee(sp, 1000),
+    sender: ROOT_ACCOUNT.addr,
+    suggestedParams: spFee(sp, 1000n),
     onComplete: algosdk.OnApplicationComplete.NoOpOC,
     approvalProgram,
     clearProgram,
@@ -93,14 +93,14 @@ async function deployFolksLendingPool(
     numLocalByteSlices: 0,
   });
   const tx = await signAndSend(createTx, ROOT_ACCOUNT);
-  const txinfo = await algod.pendingTransactionInformation(tx.txId).do();
-  const appId: number = txinfo["application-index"];
+  const txinfo = await algod.pendingTransactionInformation(tx.txid).do();
+  const appId: bigint = txinfo.applicationIndex ?? 0n;
 
   // Fund the contract.
   const fundTx = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-    from: ROOT_ACCOUNT.addr,
-    amount: 300_000,
-    to: algosdk.getApplicationAddress(appId),
+    sender: ROOT_ACCOUNT.addr,
+    amount: 300_000n, // Initial funding for the app.
+    receiver: algosdk.getApplicationAddress(appId),
     suggestedParams: sp,
   });
 
@@ -114,8 +114,8 @@ async function deployFolksLendingPool(
 
   // Init the app.
   const initTx = algosdk.makeApplicationNoOpTxnFromObject({
-    from: ROOT_ACCOUNT.addr,
-    suggestedParams: spFee(sp, 3000),
+    sender: ROOT_ACCOUNT.addr,
+    suggestedParams: spFee(sp, 3000n),
     appIndex: appId,
     appArgs: initAppArgs,
     foreignAssets: options.originalAssetId ? [options.originalAssetId] : [],
@@ -141,18 +141,18 @@ export class LendingPoolAdapterTestBed {
   ) {}
 
   async addLiquidity(
-    primaryAssetAmount: number,
-    secondaryAssetAmount: number,
-    slippagePct = 0,
+    primaryAssetAmount: bigint,
+    secondaryAssetAmount: bigint,
+    slippagePct = 0n,
   ) {
     const lendingLiquidityAddition =
-      await this.lendingPoolAdapter.prepareAddLiquidity({
+      this.lendingPoolAdapter.prepareAddLiquidity({
         primaryAssetAmount,
         secondaryAssetAmount,
         slippagePct,
       });
     const txGroup = await this.lendingPoolAdapter.prepareAddLiquidityTxGroup({
-      address: this.account.addr,
+      address: algosdk.encodeAddress(this.account.addr.publicKey),
       liquidityAddition: lendingLiquidityAddition,
     });
     await signAndSend(txGroup, this.account);
@@ -171,14 +171,14 @@ export async function makeFreshLendingPoolTestbed(): Promise<LendingPoolAdapterT
   const managerId = await deploy_folks_manager();
 
   await waitRounds(10, user);
-  const updatedAt = (await getLastRound(algod)) - 10;
+  const updatedAt = (await getLastRound(algod)) - 10n;
 
   // Simulates Folks mainnet Algo pool (147169673).
   const primaryLendingPoolId = await deployFolksLendingPool({
-    originalAssetId: 0,
+    originalAssetId: 0n,
     managerId,
-    interestIndex: 103440176304992,
-    interestRate: 6229129240500989,
+    interestIndex: 103440176304992n,
+    interestRate: 6229129240500989n,
     updatedAt: updatedAt,
   });
 
@@ -186,8 +186,8 @@ export async function makeFreshLendingPoolTestbed(): Promise<LendingPoolAdapterT
   const secondaryLendingPoolId = await deployFolksLendingPool({
     originalAssetId,
     managerId,
-    interestIndex: 100278968447135,
-    interestRate: 44080950253372,
+    interestIndex: 100278968447135n,
+    interestRate: 44080950253372n,
     updatedAt: updatedAt,
   });
 
@@ -227,13 +227,15 @@ export async function makeFreshLendingPoolTestbed(): Promise<LendingPoolAdapterT
     pactPool.liquidityAsset.index,
   ];
   const txGroup = await lendingPoolAdapter.prepareOptInToAssetTxGroup({
-    address: user.addr,
+    address: algosdk.encodeAddress(user.addr.publicKey),
     assetIds,
   });
   await signAndSend(txGroup, user);
 
   // Opt in user to LP token.
-  const optInTx = await pactPool.liquidityAsset.prepareOptInTx(user.addr);
+  const optInTx = await pactPool.liquidityAsset.prepareOptInTx(
+    algosdk.encodeAddress(user.addr.publicKey),
+  );
   await signAndSend(optInTx, user);
 
   const lastRound = await getLastRound(algod);
@@ -243,7 +245,7 @@ export async function makeFreshLendingPoolTestbed(): Promise<LendingPoolAdapterT
   return new LendingPoolAdapterTestBed(
     user,
     pact,
-    await pact.fetchAsset(0),
+    await pact.fetchAsset(0n),
     await pact.fetchAsset(originalAssetId),
     lendingPoolAdapter,
   );

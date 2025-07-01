@@ -88,7 +88,7 @@ export class PoolCreator {
         sender: address,
       });
       const tx = this.makeAppCreateTx(address, poolData);
-      tx.fee = poolData.fee;
+      tx.fee = BigInt(poolData.fee);
       return tx;
     } catch (e: any) {
       throw this.handleError(e);
@@ -166,7 +166,7 @@ export class PoolCreator {
 
       const txs = [tx1, tx2, tx3];
       for (let i = 0; i < 3; i++) {
-        txs[i].fee = txsData[i].fee;
+        txs[i].fee = BigInt(txsData[i].fee);
       }
 
       return txs;

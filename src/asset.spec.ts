@@ -8,11 +8,11 @@ describe("Asset", () => {
     const pact = new PactClient(algod);
     const asset = await pact.fetchAsset(0n);
 
-    expect(asset.decimals).toBe(6);
-    expect(asset.index).toBe(0);
+    expect(asset.decimals).toBe(6n);
+    expect(asset.index).toBe(0n);
     expect(asset.name).toBe("Algo");
     expect(asset.unitName).toBe("ALGO");
-    expect(asset.ratio).toBe(10 ** 6);
+    expect(asset.ratio).toBe(10n ** 6n);
   });
 
   it("fetch ASA", async () => {
@@ -20,15 +20,15 @@ describe("Asset", () => {
     const account = await newAccount();
     const assetIndex = await createAsset(account, {
       name: "JAMNIK",
-      decimals: 10,
+      decimals: 10n,
     });
     const asset = await pact.fetchAsset(assetIndex);
 
-    expect(asset.decimals).toBe(10);
+    expect(asset.decimals).toBe(10n);
     expect(asset.index).toBe(assetIndex);
     expect(asset.name).toBe("JAMNIK");
     expect(asset.unitName).toBe("JAMNIK");
-    expect(asset.ratio).toBe(10 ** 10);
+    expect(asset.ratio).toBe(10n ** 10n);
   });
 
   it("fetch ASA with no name", async () => {
@@ -36,15 +36,15 @@ describe("Asset", () => {
     const account = await newAccount();
     const assetIndex = await createAsset(account, {
       name: undefined,
-      decimals: 10,
+      decimals: 10n,
     });
     const asset = await pact.fetchAsset(assetIndex);
 
-    expect(asset.decimals).toBe(10);
+    expect(asset.decimals).toBe(10n);
     expect(asset.index).toBe(assetIndex);
-    expect(asset.name).toBeUndefined;
-    expect(asset.unitName).toBeUndefined;
-    expect(asset.ratio).toBe(10 ** 10);
+    expect(asset.name).toBeUndefined();
+    expect(asset.unitName).toBeUndefined();
+    expect(asset.ratio).toBe(10n ** 10n);
   });
 
   it("fetch not existing asset", async () => {
@@ -61,7 +61,7 @@ describe("Asset", () => {
     const creator = await newAccount();
     const assetIndex = await createAsset(creator, {
       name: "test",
-      decimals: 10,
+      decimals: 10n,
     });
     const asset = await pact.fetchAsset(assetIndex);
 

@@ -11,7 +11,7 @@ export class TransactionGroup {
    */
   transactions: algosdk.Transaction[];
 
-  groupIdBuffer: Buffer;
+  groupIdBuffer: Uint8Array;
 
   /**
    * Creates the TransactionGroup from an array of transactions by assigning a group id to each transaction.

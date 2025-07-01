@@ -36,12 +36,12 @@ async function assertSwap(
   );
 
   if (swap.assetDeposited.index === testbed.algo.index) {
-    expect(Math.abs(newState.totalPrimary - oldState.totalPrimary)).toBe(
-      swap.fSwap.effect.amountDeposited,
-    );
-    expect(Math.abs(oldState.totalSecondary - newState.totalSecondary)).toBe(
-      swap.fSwap.effect.minimumAmountReceived,
-    );
+    expect(
+      Math.abs(Number(newState.totalPrimary - oldState.totalPrimary)),
+    ).toBe(swap.fSwap.effect.amountDeposited);
+    expect(
+      Math.abs(Number(oldState.totalSecondary - newState.totalSecondary)),
+    ).toBe(swap.fSwap.effect.minimumAmountReceived);
 
     expect(Math.abs(oldPrimaryHolding! - newPrimaryHolding!)).toBe(
       swap.amountDeposited + swap.txFee,
@@ -50,18 +50,18 @@ async function assertSwap(
       swap.minimumAmountReceived,
     );
   } else {
-    expect(Math.abs(oldState.totalSecondary - newState.totalSecondary)).toBe(
-      swap.fSwap.effect.amountDeposited,
-    );
-    expect(Math.abs(newState.totalPrimary - oldState.totalPrimary)).toBe(
-      swap.fSwap.effect.minimumAmountReceived,
-    );
+    expect(
+      Math.abs(Number(oldState.totalSecondary - newState.totalSecondary)),
+    ).toBe(swap.fSwap.effect.amountDeposited);
+    expect(
+      Math.abs(Number(newState.totalPrimary - oldState.totalPrimary)),
+    ).toBe(swap.fSwap.effect.minimumAmountReceived);
 
     expect(Math.abs(newSecondaryHolding! - oldSecondaryHolding!)).toBe(
       swap.amountDeposited,
     );
     expect(Math.abs(oldPrimaryHolding! - newPrimaryHolding!)).toBe(
-      Math.abs(swap.minimumAmountReceived - swap.txFee),
+      Math.abs(Number(swap.minimumAmountReceived - swap.txFee)),
     );
   }
 }
@@ -73,9 +73,9 @@ describe("FolksLendingPool", () => {
     // Add liquidity
     const lendingLiquidityAddition =
       await testbed.lendingPoolAdapter.prepareAddLiquidity({
-        primaryAssetAmount: 100_000,
-        secondaryAssetAmount: 50_000,
-        slippagePct: 0,
+        primaryAssetAmount: 100_000n,
+        secondaryAssetAmount: 50_000n,
+        slippagePct: 0n,
       });
     let txGroup = await testbed.lendingPoolAdapter.prepareAddLiquidityTxGroup({
       address: algosdk.encodeAddress(testbed.account.addr.publicKey),
@@ -114,18 +114,18 @@ describe("FolksLendingPool", () => {
       await testbed.lendingPoolAdapter.pactPool.liquidityAsset.getHolding(
         algosdk.encodeAddress(testbed.account.addr.publicKey),
       ),
-    ).toBe(poolLiqudityAddition.effect.mintedLiquidityTokens - 1000); // - blocked LP for first liquidity
+    ).toBe(poolLiqudityAddition.effect.mintedLiquidityTokens - 1000n); // - blocked LP for first liquidity
 
     // Remove
     txGroup = await testbed.lendingPoolAdapter.prepareRemoveLiquidityTxGroup({
       address: algosdk.encodeAddress(testbed.account.addr.publicKey),
-      amount: 20_000,
+      amount: 20_000n,
     });
     await signAndSend(txGroup, testbed.account);
 
     await testbed.lendingPoolAdapter.pactPool.updateState();
     expect(testbed.lendingPoolAdapter.pactPool.state.totalLiquidity).toBe(
-      poolLiqudityAddition.effect.mintedLiquidityTokens - 20_000,
+      poolLiqudityAddition.effect.mintedLiquidityTokens - 20_000n,
     );
   });
 
@@ -134,15 +134,15 @@ describe("FolksLendingPool", () => {
     await testbed.addLiquidity(100_000, 50_000);
 
     const swap = await testbed.lendingPoolAdapter.prepareSwap({
-      amount: 10_000,
+      amount: 10_000n,
       asset: testbed.lendingPoolAdapter.primaryLendingPool.originalAsset,
-      slippagePct: 0,
+      slippagePct: 0n,
     });
 
-    expect(swap.amountDeposited).toBe(10_000);
-    expect(swap.fSwap.effect.amountDeposited).toBe(9667);
-    expect(swap.amountReceived).toBe(4530);
-    expect(swap.fSwap.effect.amountReceived).toBe(4518);
+    expect(swap.amountDeposited).toBe(10_000n);
+    expect(swap.fSwap.effect.amountDeposited).toBe(9667n);
+    expect(swap.amountReceived).toBe(4530n);
+    expect(swap.fSwap.effect.amountReceived).toBe(4518n);
 
     await assertSwap(testbed, swap);
   });
@@ -151,16 +151,16 @@ describe("FolksLendingPool", () => {
     const testbed = await makeFreshLendingPoolTestbed();
     await testbed.addLiquidity(100_000, 50_000);
 
-    const swap = await testbed.lendingPoolAdapter.prepareSwap({
-      amount: 10_000,
+    const swap = testbed.lendingPoolAdapter.prepareSwap({
+      amount: 10_000n,
       asset: testbed.lendingPoolAdapter.secondaryLendingPool.originalAsset,
-      slippagePct: 0,
+      slippagePct: 0n,
     });
 
-    expect(swap.amountDeposited).toBe(10_000);
-    expect(swap.fSwap.effect.amountDeposited).toBe(9972);
-    expect(swap.amountReceived).toBe(16615);
-    expect(swap.fSwap.effect.amountReceived).toBe(16063);
+    expect(swap.amountDeposited).toBe(10_000n);
+    expect(swap.fSwap.effect.amountDeposited).toBe(9972n);
+    expect(swap.amountReceived).toBe(16615n);
+    expect(swap.fSwap.effect.amountReceived).toBe(16063n);
 
     await assertSwap(testbed, swap);
   });
@@ -170,16 +170,16 @@ describe("FolksLendingPool", () => {
     await testbed.addLiquidity(100_000, 50_000);
 
     const swap = await testbed.lendingPoolAdapter.prepareSwap({
-      amount: 10_000,
+      amount: 10_000n,
       asset: testbed.lendingPoolAdapter.primaryLendingPool.originalAsset,
-      slippagePct: 0,
+      slippagePct: 0n,
       swapForExact: true,
     });
 
-    expect(swap.amountDeposited).toBe(25098);
-    expect(swap.fSwap.effect.amountDeposited).toBe(24263);
-    expect(swap.amountReceived).toBe(10_000);
-    expect(swap.fSwap.effect.amountReceived).toBe(9972);
+    expect(swap.amountDeposited).toBe(25098n);
+    expect(swap.fSwap.effect.amountDeposited).toBe(24263n);
+    expect(swap.amountReceived).toBe(10_000n);
+    expect(swap.fSwap.effect.amountReceived).toBe(9972n);
 
     await assertSwap(testbed, swap);
   });
@@ -189,16 +189,16 @@ describe("FolksLendingPool", () => {
     await testbed.addLiquidity(100_000, 50_000);
 
     const swap = await testbed.lendingPoolAdapter.prepareSwap({
-      amount: 10_000,
+      amount: 10_000n,
       asset: testbed.lendingPoolAdapter.secondaryLendingPool.originalAsset,
-      slippagePct: 0,
+      slippagePct: 0n,
       swapForExact: true,
     });
 
-    expect(swap.amountDeposited).toBe(5575);
-    expect(swap.fSwap.effect.amountDeposited).toBe(5559);
-    expect(swap.amountReceived).toBe(10_000);
-    expect(swap.fSwap.effect.amountReceived).toBe(9667);
+    expect(swap.amountDeposited).toBe(5575n);
+    expect(swap.fSwap.effect.amountDeposited).toBe(5559n);
+    expect(swap.amountReceived).toBe(10_000n);
+    expect(swap.fSwap.effect.amountReceived).toBe(9667n);
 
     await assertSwap(testbed, swap);
   });

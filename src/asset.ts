@@ -219,7 +219,7 @@ export class Asset {
   buildTransferTx(
     sender: string,
     receiver: string,
-    amount: number,
+    amount: bigint,
     suggestedParams: algosdk.SuggestedParams,
     note = "",
   ): algosdk.Transaction {

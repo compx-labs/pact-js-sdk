@@ -18,7 +18,7 @@ export function getStableswapGrossAmountReceived(
   amountDeposited: bigint,
   amplifier: bigint,
   precision: bigint,
-): [bigint, number] {
+): [bigint, bigint] {
   const [invariant, invariantIterations] = getInvariant(
     liqA,
     liqB,
@@ -40,7 +40,7 @@ export function getStableswapAmountDeposited(
   grossAmountReceived: bigint,
   amplifier: bigint,
   precision: bigint,
-): [bigint, number] {
+): [bigint, bigint] {
   const [invariant, invariantIterations] = getInvariant(
     liqA,
     liqB,
@@ -88,7 +88,7 @@ export function getStableswapMintedLiquidityTokens(
   amplifier: bigint,
   precision: bigint,
   feeBps: bigint,
-): [bigint, number] {
+): [bigint, bigint] {
   if (totalPrimary + totalSecondary === 0n) {
     const mintedTokens = getConstantProductMintedLiquidityTokens(
       addedPrimary,
@@ -97,7 +97,7 @@ export function getStableswapMintedLiquidityTokens(
       totalSecondary,
       totalLiquidity,
     );
-    return [mintedTokens, 0];
+    return [mintedTokens, 0n];
   }
 
   const initialTotals: [bigint, bigint] = [totalPrimary, totalSecondary];
@@ -176,7 +176,7 @@ export function getAddLiquidityFees(
   feeBps: bigint,
   amplifier: bigint,
   precision: bigint,
-): [[bigint, bigint], bigint, number] {
+): [[bigint, bigint], bigint, bigint] {
   const n = 2n;
 
   const [initialD, initialIterations] = getInvariant(
@@ -219,11 +219,11 @@ export function getInvariant(
   liqB: bigint,
   amp: bigint,
   precision: bigint,
-): [bigint, number] {
+): [bigint, bigint] {
   const tokens_total = liqA + liqB;
   const S = tokens_total;
   if (S === 0n) {
-    return [S, 0];
+    return [S, 0n];
   }
 
   let D = S;
@@ -252,7 +252,7 @@ export function getInvariant(
   if (i === 64) {
     throw new ConvergenceError(`Didn't converge Dprev=${Dprev}, D=${D}`);
   }
-  return [D, i];
+  return [D, BigInt(i)];
 }
 
 export function getNewLiq(
@@ -374,12 +374,19 @@ export class StableswapCalculator implements SwapCalculator {
     const ratio = this.pool.primaryAsset.ratio;
     const nLiqA = decimalLiqA * ratio;
     const nLiqB = decimalLiqB * ratio;
-    const liqA = BigInt(Math.round(nLiqA));
-    const liqB = BigInt(Math.round(nLiqB));
-    const nAmountDeposited = 10 ** (6 + MAX_GET_PRICE_RETRIES - retries);
+    const liqA = BigInt(Math.round(Number(nLiqA)));
+    const liqB = BigInt(Math.round(Number(nLiqB)));
+    const nAmountDeposited =
+      10n ** (6n + BigInt(MAX_GET_PRICE_RETRIES) - BigInt(retries));
     const amountDeposited = BigInt(
       // The division helps minimize price impact of simulated swap.
-      Math.round(Math.min(nAmountDeposited, nLiqA / 100, nLiqB / 100)),
+      Math.round(
+        Math.min(
+          Number(nAmountDeposited),
+          Number(nLiqA / 100n),
+          Number(nLiqB / 100n),
+        ),
+      ),
     );
 
     try {
@@ -392,7 +399,7 @@ export class StableswapCalculator implements SwapCalculator {
       if (amountReceived === 0n) {
         return this._getPrice(decimalLiqA, decimalLiqB, retries - 1);
       }
-      return Number(amountDeposited) / Number(amountReceived);
+      return amountDeposited / amountReceived;
     } catch (error: any) {
       if (error instanceof ConvergenceError) {
         return this._getPrice(decimalLiqA, decimalLiqB, retries - 1);
