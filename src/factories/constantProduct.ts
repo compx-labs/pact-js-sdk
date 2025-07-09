@@ -16,7 +16,7 @@ export type Signer = (group: TransactionGroup) => Promise<Uint8Array[]>;
 const BUILD_SIG = new Uint8Array([238, 90, 13, 21]);
 
 export function buildContantProductTxGroup(
-  factoryId: number,
+  factoryId: bigint,
   sender: string,
   poolParams: PoolParams,
   suggestedParams: algosdk.SuggestedParams,
@@ -50,7 +50,7 @@ export function buildContantProductTxGroup(
     sender,
     appIndex: factoryId,
     appArgs,
-    suggestedParams: spFee(suggestedParams, 10000),
+    suggestedParams: spFee(suggestedParams, 10000n),
     boxes: [{ appIndex: 0, name: boxName }],
     foreignAssets: [poolParams.primaryAssetId, poolParams.secondaryAssetId],
   });

@@ -131,7 +131,7 @@ describe("FolksLendingPool", () => {
 
   it("swap primary exact", async () => {
     const testbed = await makeFreshLendingPoolTestbed();
-    await testbed.addLiquidity(100_000, 50_000);
+    await testbed.addLiquidity(100_000n, 50_000n);
 
     const swap = await testbed.lendingPoolAdapter.prepareSwap({
       amount: 10_000n,
@@ -149,7 +149,7 @@ describe("FolksLendingPool", () => {
 
   it("swap secondary exact", async () => {
     const testbed = await makeFreshLendingPoolTestbed();
-    await testbed.addLiquidity(100_000, 50_000);
+    await testbed.addLiquidity(100_000n, 50_000n);
 
     const swap = testbed.lendingPoolAdapter.prepareSwap({
       amount: 10_000n,
@@ -167,7 +167,7 @@ describe("FolksLendingPool", () => {
 
   it("swap primary for exact", async () => {
     const testbed = await makeFreshLendingPoolTestbed();
-    await testbed.addLiquidity(100_000, 50_000);
+    await testbed.addLiquidity(100_000n, 50_000n);
 
     const swap = await testbed.lendingPoolAdapter.prepareSwap({
       amount: 10_000n,
@@ -186,7 +186,7 @@ describe("FolksLendingPool", () => {
 
   it("swap secondary for exact", async () => {
     const testbed = await makeFreshLendingPoolTestbed();
-    await testbed.addLiquidity(100_000, 50_000);
+    await testbed.addLiquidity(100_000n, 50_000n);
 
     const swap = await testbed.lendingPoolAdapter.prepareSwap({
       amount: 10_000n,

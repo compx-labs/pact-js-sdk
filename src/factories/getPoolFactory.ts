@@ -10,7 +10,7 @@ export async function getPoolFactory(
   poolType: PoolType,
   config: Config,
 ) {
-  let appId: number;
+  let appId: bigint;
   let factoryClass: typeof ConstantProductFactory;
   if (poolType === "CONSTANT_PRODUCT") {
     appId = config.factoryConstantProductId;

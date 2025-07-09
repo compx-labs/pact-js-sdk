@@ -31,15 +31,15 @@ export class GasStation {
 
   buildIncreaseOpcodeQuotaTx(
     sender: string,
-    count: number,
+    count: bigint,
     suggestedParams: algosdk.SuggestedParams,
-    extra_fee = 0,
+    extra_fee = 0n,
   ): algosdk.Transaction {
     return algosdk.makeApplicationNoOpTxnFromObject({
       sender: sender,
       appIndex: this.appId,
-      appArgs: [INCREASE_OPCODE_QUOTA_SIG, ...encodeArray([count, 0])],
-      suggestedParams: spFee(suggestedParams, (count + 1) * 1000 + extra_fee),
+      appArgs: [INCREASE_OPCODE_QUOTA_SIG, ...encodeArray([count, 0n])],
+      suggestedParams: spFee(suggestedParams, (count + 1n) * 1000n + extra_fee),
     });
   }
 }

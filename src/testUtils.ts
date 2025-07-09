@@ -1,5 +1,6 @@
 import { exec } from "child_process";
 
+import * as algokit from "@algorandfoundation/algokit-utils";
 import algosdk from "algosdk";
 
 import { encode } from "./encoding";
@@ -9,11 +10,10 @@ export const ROOT_ACCOUNT = algosdk.mnemonicToSecretKey(
   "jelly swear alcohol hybrid wrong camp prize attack hurdle shaft solar entry inner arm region economy awful inch they squirrel sort renew legend absorb giant",
 );
 
-export const algod = new algosdk.Algodv2(
-  "8cec5f4261a2b5ad831a8a701560892cabfe1f0ca00a22a37dee3e1266d726e3",
-  "http://localhost",
-  8787,
-);
+const algorand = algokit.AlgorandClient.mainNet();
+
+algorand.setDefaultValidityWindow(1000);
+export const algod = algorand.client.algod;
 
 export async function signAndSend(
   txToSend: algosdk.Transaction | TransactionGroup,

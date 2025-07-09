@@ -21,7 +21,7 @@ import {
   parseInternalState,
 } from "./farmState";
 
-const UPDATE_TX_FEE = 3000;
+const UPDATE_TX_FEE = 3000n;
 const MAX_REWARD_ASSETS = 7;
 
 // update_global_state()void
@@ -388,10 +388,10 @@ export class Farm {
       secondsPassed > this.state.duration && this.state.duration > 0
         ? 671
         : 513;
-    const count = Math.floor(
-      (opcodesCost * this.state.rewardAssets.length) / 700,
+    const count = BigInt(
+      Math.floor((opcodesCost * this.state.rewardAssets.length) / 700),
     );
-    if (count === 0) {
+    if (count === 0n) {
       return null;
     }
 
@@ -458,7 +458,10 @@ export class Farm {
       foreignApps: [escrow.appId],
       accounts: [escrow.userAddress],
       appArgs: [CLAIM_REWARDS_SIG, ...appArgs],
-      suggestedParams: spFee(this.suggestedParams, 1000 * (assets.length + 1)),
+      suggestedParams: spFee(
+        this.suggestedParams,
+        1000n * (BigInt(assets.length) + 1n),
+      ),
     });
   }
 
@@ -474,7 +477,7 @@ export class Farm {
   adminBuildAddRewardAssetTx(asset: Asset): algosdk.Transaction {
     return algosdk.makeApplicationNoOpTxnFromObject({
       sender: this.state.admin,
-      suggestedParams: spFee(this.suggestedParams, 2000),
+      suggestedParams: spFee(this.suggestedParams, 2000n),
       appIndex: this.appId,
       foreignAssets: [asset.index],
       appArgs: [ADD_REWARD_ASSET_SIG, ...encodeArray([0])],
@@ -549,7 +552,7 @@ export class Farm {
       assetIndexToAsset[Number(assetIndex)].buildTransferTx(
         this.state.admin,
         this.appAddress,
-        Number(rewards[Number(assetIndex)]),
+        rewards[Number(assetIndex)],
         this.suggestedParams,
       ),
     );

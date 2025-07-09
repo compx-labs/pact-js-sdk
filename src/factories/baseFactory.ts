@@ -79,7 +79,7 @@ export function parseGlobalFactoryState(rawState: any[]): FactoryState {
 
 export async function factoryListPools(
   algod: algosdk.Algodv2,
-  factoryId: number,
+  factoryId: bigint,
 ): Promise<PoolParams[]> {
   const boxes = await algod.getApplicationBoxes(factoryId).do();
   return boxes["boxes"].map(
@@ -89,7 +89,7 @@ export async function factoryListPools(
 
 export async function getPoolId(
   algod: algosdk.Algodv2,
-  factoryId: number,
+  factoryId: bigint,
   poolParamsWrapper: PoolParamsWrapper,
 ): Promise<bigint> {
   const boxName = poolParamsWrapper.toBoxName();
@@ -114,7 +114,7 @@ export async function getPoolId(
 export abstract class PoolFactory {
   constructor(
     private algod: algosdk.Algodv2,
-    public appId: number,
+    public appId: bigint,
     public state: FactoryState,
   ) {}
 

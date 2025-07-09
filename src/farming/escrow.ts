@@ -71,7 +71,7 @@ export function buildDeployEscrowTxs(
     numGlobalByteSlices: 0,
     numLocalInts: 0,
     numLocalByteSlices: 0,
-    suggestedParams: spFee(suggestedParams, 5000),
+    suggestedParams: spFee(suggestedParams, 5000n),
     foreignApps: [farmAppId, gasStation.appId],
     foreignAssets: [stakedAssetId],
     appArgs: [CREATE_SIG, ...encodeArray([1, 2, 0])],
@@ -162,7 +162,7 @@ export class Escrow {
     return this.farm.getUserStateFromAccountInfo(accountInfo);
   }
 
-  buildStakeTxs(amount: number): algosdk.Transaction[] {
+  buildStakeTxs(amount: bigint): algosdk.Transaction[] {
     const transferTx = this.farm.stakedAsset.buildTransferTx(
       this.userAddress,
       this.address,
@@ -186,7 +186,7 @@ export class Escrow {
         new algosdk.ABIUintType(64).encode(amount),
         new algosdk.ABIUintType(8).encode(1),
       ],
-      suggestedParams: spFee(this.suggestedParams, 3000),
+      suggestedParams: spFee(this.suggestedParams, 3000n),
     });
 
     const txs = [unstakeTx];
@@ -217,7 +217,7 @@ export class Escrow {
       appIndex: this.appId,
       appArgs: [SEND_MESSAGE_SIG, new algosdk.ABIUintType(8).encode(1), note],
       accounts: [address],
-      suggestedParams: spFee(this.suggestedParams, 2000),
+      suggestedParams: spFee(this.suggestedParams, 2000n),
     });
   }
 
@@ -226,7 +226,7 @@ export class Escrow {
       sender: this.userAddress,
       appIndex: this.appId,
       appArgs: [WITHDRAW_ALGOS_SIG],
-      suggestedParams: spFee(this.suggestedParams, 2000),
+      suggestedParams: spFee(this.suggestedParams, 2000n),
     });
   }
 
@@ -252,7 +252,7 @@ export class Escrow {
       appIndex: this.appId,
       foreignApps: [this.farm.appId],
       foreignAssets: [this.farm.stakedAsset.index],
-      suggestedParams: spFee(this.suggestedParams, 3000),
+      suggestedParams: spFee(this.suggestedParams, 3000n),
     });
   }
 }

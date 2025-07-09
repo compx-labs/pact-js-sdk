@@ -155,7 +155,9 @@ export class FolksLendingPool {
   }
 
   getLastTimestamp(): number {
-    return this.lastTimestamp ?? Math.floor(new Date().getTime() / 1000);
+    return Number(
+      this.lastTimestamp ?? Math.floor(new Date().getTime() / 1000),
+    );
   }
 }
 
@@ -614,7 +616,7 @@ export class FolksLendingPoolAdapter {
       throw new PactSdkError("Length of assetIds must be between 1 and 8.");
     }
 
-    assetIds = assetIds.filter((id) => id !== 0);
+    assetIds = assetIds.filter((id) => id !== 0n);
 
     const tx1 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
       sender: address,
