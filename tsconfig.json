@@ -10,7 +10,8 @@
     "baseUrl": "./",
     "outDir": "./dist/esm",
     "declaration": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "skipLibCheck": true
   },
   "include": ["src/**/*.ts", "src/zap.spec.tsa", "src/zap.spec.tsa"],
   "exclude": ["node_modules", "dist/**", "rollup.config.js"]

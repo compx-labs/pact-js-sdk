@@ -10,7 +10,58 @@ export const ROOT_ACCOUNT = algosdk.mnemonicToSecretKey(
   "jelly swear alcohol hybrid wrong camp prize attack hurdle shaft solar entry inner arm region economy awful inch they squirrel sort renew legend absorb giant",
 );
 
-const algorand = algokit.AlgorandClient.mainNet();
+const ALGOD_DEFAULT_URL = "http://localhost:8787";
+const ALGOD_DEFAULT_TOKEN =
+  "8cec5f4261a2b5ad831a8a701560892cabfe1f0ca00a22a37dee3e1266d726e3";
+
+type ParsedEndpoint = {
+  server: string;
+  port?: number;
+};
+
+function parseEndpoint(rawUrl: string): ParsedEndpoint {
+  try {
+    const normalized = rawUrl.includes("://") ? rawUrl : `http://${rawUrl}`;
+    const url = new URL(normalized);
+    return {
+      server: `${url.protocol}//${url.hostname}`,
+      port: url.port ? Number(url.port) : undefined,
+    };
+  } catch {
+    return { server: rawUrl };
+  }
+}
+
+const resolvedFromUrl = parseEndpoint(
+  process.env.ALGOD_URL ?? process.env.ALGOD_SERVER ?? ALGOD_DEFAULT_URL,
+);
+
+const resolvedFromServer = process.env.ALGOD_SERVER
+  ? parseEndpoint(process.env.ALGOD_SERVER)
+  : null;
+
+const algodServer = resolvedFromServer?.server ?? resolvedFromUrl.server;
+
+let algodPort =
+  process.env.ALGOD_PORT !== undefined
+    ? Number(process.env.ALGOD_PORT)
+    : resolvedFromServer?.port ?? resolvedFromUrl.port;
+
+if (
+  algodPort === undefined &&
+  !process.env.ALGOD_SERVER &&
+  !process.env.ALGOD_URL
+) {
+  algodPort = 8787;
+}
+
+const algorand = algokit.AlgorandClient.fromConfig({
+  algodConfig: {
+    server: algodServer,
+    port: algodPort,
+    token: process.env.ALGOD_TOKEN ?? ALGOD_DEFAULT_TOKEN,
+  },
+});
 
 algorand.setDefaultValidityWindow(1000);
 export const algod = algorand.client.algod;

@@ -90,8 +90,8 @@ describe("factory", () => {
     const coin = await pact.fetchAsset(
       await createAsset(admin, {
         name: "COIN",
-        decimals: 0,
-        totalIssuance: 1000,
+        decimals: 0n,
+        totalIssuance: 1000n,
       }),
     );
 

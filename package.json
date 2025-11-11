@@ -57,6 +57,7 @@
     "eslint-plugin-prettier": "^4.0.0",
     "import-sort-style-module": "^6.0.0",
     "jest": "^27.4.7",
+    "node-fetch": "^2.7.0",
     "prettier": "^2.5.1",
     "prettier-plugin-import-sort": "^0.0.7",
     "rollup": "^2.66.0",

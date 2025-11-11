@@ -57,13 +57,15 @@ export class FarmingTestBed {
     await this.farm.updateState();
   }
 
-  stake(amount: number) {
-    const stakeTxs = this.escrow.buildStakeTxs(amount);
+  stake(amount: bigint | number) {
+    const normalizedAmount = typeof amount === "bigint" ? amount : BigInt(amount);
+    const stakeTxs = this.escrow.buildStakeTxs(normalizedAmount);
     return signAndSend(new TransactionGroup(stakeTxs), this.userAccount);
   }
 
-  unstake(amount: number) {
-    const unstakeTxs = this.escrow.buildUnstakeTxs(amount);
+  unstake(amount: bigint | number) {
+    const normalizedAmount = typeof amount === "bigint" ? Number(amount) : amount;
+    const unstakeTxs = this.escrow.buildUnstakeTxs(normalizedAmount);
     return signAndSend(new TransactionGroup(unstakeTxs), this.userAccount);
   }
 
@@ -208,7 +210,7 @@ export async function makeNewAccountForFarm(
   const transferTx = farm.stakedAsset.buildTransferTx(
     adminAccount.addr.toString(),
     userAccount.addr.toString(),
-    1_000_000,
+    1_000_000n,
     farm.suggestedParams,
   );
   await signAndSend(transferTx, adminAccount);

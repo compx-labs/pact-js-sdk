@@ -568,7 +568,7 @@ describe("Farming", () => {
     await waitRounds(20, testbed.userAccount);
 
     // Stake user B.
-    let stakeTxs = escrowB.buildStakeTxs(900);
+    let stakeTxs = escrowB.buildStakeTxs(900n);
     let stakeGroup = new TransactionGroup(stakeTxs);
     await signAndSend(stakeGroup, accountB);
     await waitRounds(50, testbed.userAccount);
@@ -589,7 +589,7 @@ describe("Farming", () => {
     });
 
     // Stake user C.
-    stakeTxs = escrowC.buildStakeTxs(4000);
+    stakeTxs = escrowC.buildStakeTxs(4000n);
     stakeGroup = new TransactionGroup(stakeTxs);
     await signAndSend(stakeGroup, accountC);
     await waitRounds(50, testbed.userAccount);
@@ -933,13 +933,13 @@ describe("Farming", () => {
     ];
 
     // Stake all 3 users.
-    let stakeTxs = escrowA.buildStakeTxs(1000);
+    let stakeTxs = escrowA.buildStakeTxs(1000n);
     await signAndSend(new TransactionGroup(stakeTxs), accountA);
 
-    stakeTxs = escrowB.buildStakeTxs(2000);
+    stakeTxs = escrowB.buildStakeTxs(2000n);
     await signAndSend(new TransactionGroup(stakeTxs), accountB);
 
-    stakeTxs = escrowC.buildStakeTxs(3000);
+    stakeTxs = escrowC.buildStakeTxs(3000n);
     await signAndSend(new TransactionGroup(stakeTxs), accountC);
 
     // Check state.
@@ -1146,11 +1146,11 @@ describe("Farming", () => {
       100,
     );
 
-    let stakeTxs = escrowA.buildStakeTxs(10);
+    let stakeTxs = escrowA.buildStakeTxs(10n);
     await signAndSend(new TransactionGroup(stakeTxs), accountA);
 
     await waitRounds(10, accountA);
-    stakeTxs = escrowB.buildStakeTxs(1000);
+    stakeTxs = escrowB.buildStakeTxs(1000n);
     await signAndSend(new TransactionGroup(stakeTxs), accountB);
 
     await waitRounds(10, accountA);
@@ -1294,7 +1294,7 @@ describe("Farming", () => {
     await escrow.refreshSuggestedParams();
 
     // Stake.
-    const stakeTxs = escrow.buildStakeTxs(100);
+    const stakeTxs = escrow.buildStakeTxs(100n);
     await signAndSend(new TransactionGroup(stakeTxs), userAccount);
 
     // Wait some time.
@@ -1346,7 +1346,7 @@ describe("Farming", () => {
     const transferTx = testbed.algo.buildTransferTx(
       algosdk.encodeAddress(testbed.adminAccount.addr.publicKey),
       testbed.escrow.address,
-      100,
+      100n,
       testbed.escrow.suggestedParams,
     );
     await signAndSend(transferTx, testbed.adminAccount);
